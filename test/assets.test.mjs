@@ -48,3 +48,11 @@ test('moksha world assets are complete and valid', async (t) => {
 test('habits world assets are complete and valid', async (t) => {
   await checkWorldAssets(t, 'habits');
 });
+
+test('founders world assets are complete and valid', async (t) => {
+  await checkWorldAssets(t, 'founders');
+});
+
+test('panchatantra world assets are complete and valid', async (t) => {
+  await checkWorldAssets(t, 'panchatantra');
+});
