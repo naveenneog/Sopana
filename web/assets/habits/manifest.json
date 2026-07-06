@@ -1,0 +1,38 @@
+{
+  "img": [
+    "board.png",
+    "ladder-11.png",
+    "ladder-20.png",
+    "ladder-3.png",
+    "ladder-36.png",
+    "ladder-45.png",
+    "ladder-58.png",
+    "ladder-71.png",
+    "snake-17.png",
+    "snake-32.png",
+    "snake-41.png",
+    "snake-54.png",
+    "snake-63.png",
+    "snake-78.png",
+    "snake-88.png",
+    "snake-96.png",
+    "token.png"
+  ],
+  "audio": [
+    "ladder-11.mp3",
+    "ladder-20.mp3",
+    "ladder-3.mp3",
+    "ladder-36.mp3",
+    "ladder-45.mp3",
+    "ladder-58.mp3",
+    "ladder-71.mp3",
+    "snake-17.mp3",
+    "snake-32.mp3",
+    "snake-41.mp3",
+    "snake-54.mp3",
+    "snake-63.mp3",
+    "snake-78.mp3",
+    "snake-88.mp3",
+    "snake-96.mp3"
+  ]
+}

@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Sopāna — Ascent of the Soul</title>
+    <style>
+      html, body { margin: 0; height: 100%; overflow: hidden; background: #0a0603; font-family: Georgia, 'Noto Serif', serif; color: #f4e6cd; }
+      #stage { position: fixed; inset: 0; }
+      #title { position: fixed; top: 1.4rem; left: 0; right: 0; text-align: center; font-size: 1.5rem; letter-spacing: 0.14em; color: #e8a33d; text-shadow: 0 0 20px rgba(232, 163, 61, 0.6); pointer-events: none; }
+      #status { position: fixed; top: 3.2rem; left: 0; right: 0; text-align: center; font-size: 1rem; color: #d9c39c; text-shadow: 0 2px 6px #000; pointer-events: none; }
+      #hud { position: fixed; left: 0; right: 0; bottom: 0; display: flex; gap: 1rem; align-items: center; justify-content: center; padding: 1.2rem; }
+      #roll, #restartBtn { font: inherit; font-size: 1.1rem; font-weight: bold; letter-spacing: 0.04em; color: #241200; background: linear-gradient(180deg, #ffcf7a, #e8a33d); border: 0; border-radius: 12px; padding: 0.8rem 1.7rem; cursor: pointer; box-shadow: 0 6px 20px rgba(232, 163, 61, 0.4); }
+      #roll:disabled { opacity: 0.5; cursor: default; }
+      #card { position: fixed; left: 50%; bottom: 6.2rem; transform: translateX(-50%) translateY(20px); width: min(90vw, 460px); background: linear-gradient(180deg, #231208, #160c05); border: 1px solid rgba(232, 163, 61, 0.45); border-radius: 16px; padding: 1rem 1.2rem; box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6); text-align: center; opacity: 0; transition: opacity 0.3s, transform 0.3s; pointer-events: none; }
+      #card.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+      #card .kind { font-size: 0.7rem; letter-spacing: 0.14em; text-transform: uppercase; padding: 0.15rem 0.6rem; border-radius: 999px; background: #d9b64e; color: #1a0d04; }
+      #card .kind.snake { background: #c0392b; color: #fff; }
+      #card h2 { margin: 0.5rem 0 0.1rem; font-size: 1.6rem; }
+      #card .en { color: #b79b74; font-style: italic; margin: 0; }
+      #card .m { margin: 0.6rem 0 0; font-size: 1.06rem; line-height: 1.5; }
+      #realmTitle { position: fixed; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; pointer-events: none; opacity: 0; transition: opacity 0.5s; z-index: 30; }
+      #realmTitle.show { opacity: 1; }
+      #realmTitle .rt-name { font-size: 2.7rem; letter-spacing: 0.14em; color: #ffd98a; text-shadow: 0 0 28px rgba(232, 163, 61, 0.7); }
+      #realmTitle .rt-sub { margin-top: 0.5rem; font-size: 1.05rem; color: #e8cfa0; font-style: italic; max-width: 80vw; }
+      #journalBtn, #muteBtn { font: inherit; font-size: 0.95rem; color: #f4e6cd; background: rgba(255, 255, 255, 0.06); border: 1px solid rgba(232, 163, 61, 0.4); border-radius: 12px; padding: 0.8rem 1rem; cursor: pointer; }
+      #journal { position: fixed; top: 0; right: 0; bottom: 0; width: min(92vw, 360px); background: linear-gradient(180deg, #1c1108, #0d0704); border-left: 1px solid rgba(232, 163, 61, 0.4); box-shadow: -10px 0 40px rgba(0, 0, 0, 0.6); transform: translateX(100%); transition: transform 0.3s; z-index: 40; padding: 1.2rem; overflow-y: auto; }
+      #journal.show { transform: translateX(0); }
+      #journal h3 { color: #e8a33d; text-align: center; letter-spacing: 0.1em; margin: 0.2rem 0 1rem; }
+      #journal .empty { color: #8a745a; text-align: center; font-style: italic; }
+      #jList .j { border-left: 3px solid #d9b64e; padding: 0.4rem 0.6rem; margin-bottom: 0.7rem; background: rgba(255, 255, 255, 0.03); border-radius: 0 8px 8px 0; font-size: 0.94rem; }
+      #jList .j.snake { border-left-color: #c0392b; }
+      #jList .j i { color: #b79b74; }
+      #jList .j div { color: #d9c39c; margin-top: 0.2rem; font-size: 0.86rem; }
+      #jClear { margin-top: 1rem; width: 100%; font: inherit; color: #d9c39c; background: transparent; border: 1px solid rgba(232, 163, 61, 0.4); border-radius: 10px; padding: 0.5rem; cursor: pointer; }
+      #jClose { margin-top: 0.6rem; width: 100%; font: inherit; color: #241200; background: #e8a33d; border: 0; border-radius: 10px; padding: 0.6rem; cursor: pointer; }
+      #startScreen { position: fixed; inset: 0; z-index: 60; background: radial-gradient(120% 90% at 50% 40%, rgba(232, 163, 61, 0.12), transparent 60%), #080503; display: flex; align-items: center; justify-content: center; transition: opacity 0.6s; }
+      #startScreen.hide { opacity: 0; pointer-events: none; }
+      #startInner { text-align: center; position: relative; z-index: 2; }
+      #startScreen .brandBig { font-size: 4rem; letter-spacing: 0.16em; color: #ffd98a; text-shadow: 0 0 40px rgba(232, 163, 61, 0.7); }
+      #startScreen .tag { margin: 0.6rem 0 2rem; color: #e8cfa0; font-style: italic; font-size: 1.1rem; }
+      #beginBtn { font: inherit; font-size: 1.25rem; font-weight: bold; letter-spacing: 0.04em; color: #241200; background: linear-gradient(180deg, #ffcf7a, #e8a33d); border: 0; border-radius: 14px; padding: 0.9rem 2rem; cursor: pointer; box-shadow: 0 8px 28px rgba(232, 163, 61, 0.45); }
+      #beginBtn:disabled { opacity: 0.6; cursor: default; }
+      #introVideo { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: none; background: #000; z-index: 1; }
+      #skipIntro { position: absolute; bottom: 1.5rem; right: 1.5rem; z-index: 3; display: none; font: inherit; color: #f4e6cd; background: rgba(0, 0, 0, 0.5); border: 1px solid rgba(232, 163, 61, 0.5); border-radius: 10px; padding: 0.5rem 1rem; cursor: pointer; }
+    </style>
+  </head>
+  <body>
+    <div id="stage"></div>
+    <div id="title">॥ Sopāna ॥</div>
+    <div id="status">Roll to begin the ascent</div>
+    <div id="card"><span id="cKind" class="kind"></span><h2 id="cName"></h2><p class="en" id="cEn"></p><p class="m" id="cMeaning"></p></div>
+    <div id="realmTitle"><div id="rtName" class="rt-name"></div><div id="rtSub" class="rt-sub"></div></div>
+    <div id="journal"><h3>॥ Reflection Journal ॥</h3><div id="jList"></div><button id="jClear">Clear</button><button id="jClose">Close</button></div>
+    <div id="hud"><button id="roll">Roll the die</button><button id="restartBtn" style="display: none;">↻ Begin again</button><button id="journalBtn">📜 Journal (<span id="jCount">0</span>)</button><button id="muteBtn" title="Sound on/off">🔊</button></div>
+    <div id="startScreen">
+      <video id="introVideo" playsinline preload="auto"></video>
+      <button id="skipIntro">Skip ▶</button>
+      <div id="startInner">
+        <div class="brandBig">॥ Sopāna ॥</div>
+        <div class="tag">Ascent of the Soul — a shadow-puppet journey to Mokṣa</div>
+        <button id="beginBtn">Begin the Ascent ▶</button>
+      </div>
+    </div>
+    <script type="module" src="js/cinematic.js"></script>
+  </body>
+</html>

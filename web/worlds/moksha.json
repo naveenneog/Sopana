@@ -1,0 +1,44 @@
+{
+  "id": "moksha",
+  "title": "Snake & Ladders — Original",
+  "subtitle": "the original Indian Moksha Patam",
+  "size": 100,
+  "cols": 10,
+  "goalLabel": "Moksha",
+  "goalMeaning": "Liberation. Free at last from the wheel of desire and rebirth.",
+  "theme": {
+    "bg": "#160d08",
+    "panel": "#231208",
+    "tileA": "#2c1a0e",
+    "tileB": "#39230f",
+    "accent": "#e8a33d",
+    "snake": "#c0392b",
+    "ladder": "#d9b64e",
+    "text": "#f4e6cd",
+    "muted": "#b79b74",
+    "font": "'Georgia', 'Noto Serif', serif"
+  },
+  "assets": "assets/moksha",
+  "avatarLabel": "Your pilgrim",
+  "voice": { "web": "en-IN", "azure": "en-IN-Arjun:DragonHDLatestNeural" },
+  "ladders": [
+    { "from": 4,  "to": 25, "name": "Shraddha", "en": "Faith",        "meaning": "Faith steadies the seeker and lifts the heart toward the light." },
+    { "from": 13, "to": 46, "name": "Daana",     "en": "Generosity",  "meaning": "What you give away freely returns to you as ascent." },
+    { "from": 22, "to": 44, "name": "Vinaya",    "en": "Humility",    "meaning": "Bow low, and you are raised high." },
+    { "from": 33, "to": 60, "name": "Satya",     "en": "Truth",       "meaning": "Truth is a straight ladder; it never lets you slip." },
+    { "from": 42, "to": 71, "name": "Kshama",    "en": "Forgiveness", "meaning": "To forgive is to set down a great weight and rise." },
+    { "from": 50, "to": 84, "name": "Tapas",     "en": "Discipline",  "meaning": "Steady effort burns away the dross and carries you upward." },
+    { "from": 74, "to": 92, "name": "Jnana",     "en": "Knowledge",   "meaning": "Right knowledge clears the last mists on the path to liberation." }
+  ],
+  "snakes": [
+    { "from": 28, "to": 6,  "name": "Moha",      "en": "Delusion",     "meaning": "Attachment clouds the mind and drags you back to where you began." },
+    { "from": 37, "to": 19, "name": "Mada",      "en": "Intoxication", "meaning": "Drunk on the senses, you stumble and lose your footing." },
+    { "from": 47, "to": 26, "name": "Matsara",   "en": "Envy",         "meaning": "Envy of another's climb only lowers your own." },
+    { "from": 55, "to": 34, "name": "Steya",     "en": "Theft",        "meaning": "What is taken unjustly must be repaid with a fall." },
+    { "from": 68, "to": 51, "name": "Asatya",    "en": "Falsehood",    "meaning": "A single lie is a slippery slope; down you slide." },
+    { "from": 79, "to": 24, "name": "Krodha",    "en": "Anger",        "meaning": "Rage burns the one who holds it, and casts you far down." },
+    { "from": 87, "to": 36, "name": "Lobha",     "en": "Greed",        "meaning": "Greed swallows the greedy; the higher you were, the harder you fall." },
+    { "from": 95, "to": 42, "name": "Ahankara",  "en": "Pride",        "meaning": "Pride goes before the fall, even near the very summit." },
+    { "from": 99, "to": 7,  "name": "Kama",      "en": "Desire",       "meaning": "Desire seizes you at the threshold of liberation and casts you to the depths." }
+  ]
+}

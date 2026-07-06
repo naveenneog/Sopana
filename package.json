@@ -1,0 +1,26 @@
+{
+  "name": "sopana",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Sopana — a themed Snakes & Ladders (the original Indian Moksha Patam) with 2.5D cinematic and 3D modes; every snake and ladder reads its meaning aloud.",
+  "scripts": {
+    "test": "node --test",
+    "serve": "node scripts/serve.mjs",
+    "cap:add": "cap add android",
+    "cap:sync": "cap sync android"
+  },
+  "license": "PolyForm-Noncommercial-1.0.0",
+  "devDependencies": {
+    "@capacitor/android": "^7.4.4",
+    "@capacitor/cli": "^7.4.4",
+    "@capacitor/core": "^7.4.4",
+    "jsdom": "^29.1.1",
+    "playwright": "^1.61.1"
+  },
+  "dependencies": {
+    "pixi.js": "^7.4.3",
+    "three": "^0.185.0"
+  }
+}
+

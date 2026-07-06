@@ -1,0 +1,43 @@
+{
+  "id": "habits",
+  "title": "Habit Heroes",
+  "subtitle": "Good habits lift you up!",
+  "size": 100,
+  "cols": 10,
+  "goalLabel": "Superstar!",
+  "goalMeaning": "You made it to the top with lots of good habits. You're a superstar!",
+  "theme": {
+    "bg": "#eaf3ff",
+    "panel": "#ffffff",
+    "tileA": "#dcefff",
+    "tileB": "#eafcf0",
+    "accent": "#ff7043",
+    "snake": "#42a5f5",
+    "ladder": "#66bb6a",
+    "text": "#243b53",
+    "muted": "#6b7f95",
+    "font": "'Trebuchet MS', 'Baloo 2', 'Comic Sans MS', sans-serif"
+  },
+  "assets": "assets/habits",
+  "avatarLabel": "Your hero",
+  "voice": { "web": "en-US", "azure": "en-US-AnaNeural", "style": "cheerful" },
+  "ladders": [
+    { "from": 3,  "to": 22, "name": "Sharing",        "en": "Sharing",        "meaning": "You shared your toy with a friend. Climb up, superstar!" },
+    { "from": 11, "to": 28, "name": "Brushing teeth", "en": "Brushing teeth", "meaning": "Sparkly clean teeth! Up you go!" },
+    { "from": 20, "to": 39, "name": "Saying sorry",   "en": "Saying sorry",   "meaning": "Saying sorry is brave and kind. Climb higher!" },
+    { "from": 36, "to": 55, "name": "Helping out",    "en": "Helping out",    "meaning": "You helped tidy the room. What a star!" },
+    { "from": 45, "to": 66, "name": "Eating veggies", "en": "Eating veggies", "meaning": "Yummy veggies make you strong. Climb!" },
+    { "from": 58, "to": 77, "name": "Reading",        "en": "Reading a book", "meaning": "Reading takes you to wonderful new heights!" },
+    { "from": 71, "to": 90, "name": "Kindness",       "en": "Being kind",     "meaning": "You were kind to a friend. Soar up high!" }
+  ],
+  "snakes": [
+    { "from": 17, "to": 4,  "name": "Screen time",   "en": "Too much screen time", "meaning": "Too much screen time. Oops, slide back down." },
+    { "from": 32, "to": 13, "name": "Fibbing",       "en": "Telling a fib",        "meaning": "A little fib grew big. Down you go." },
+    { "from": 41, "to": 20, "name": "No breakfast",  "en": "Skipping breakfast",   "meaning": "No breakfast means no energy. Slide down." },
+    { "from": 54, "to": 31, "name": "Messiness",     "en": "Being messy",          "meaning": "Toys everywhere! Tidy up and try again." },
+    { "from": 63, "to": 45, "name": "Teasing",       "en": "Teasing others",       "meaning": "Teasing isn't kind. Down the slide." },
+    { "from": 78, "to": 50, "name": "Staying up",    "en": "Staying up too late",  "meaning": "Too little sleep. Whoops, slide down." },
+    { "from": 88, "to": 60, "name": "Wasting food",  "en": "Wasting food",         "meaning": "Try not to waste food. Down you go." },
+    { "from": 96, "to": 42, "name": "Forgetting",    "en": "Forgetting to say thanks", "meaning": "Remember your manners. Slide back a bit." }
+  ]
+}

@@ -1,0 +1,8 @@
+{
+  "appId": "com.naveenneog.sopana",
+  "appName": "Sopana",
+  "webDir": "web",
+  "android": {
+    "backgroundColor": "#0a0603"
+  }
+}

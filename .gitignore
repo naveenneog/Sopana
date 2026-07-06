@@ -1,0 +1,12 @@
+node_modules/
+.DS_Store
+*.log
+web/assets/generated/
+tooling/_shots/
+tooling/_intro/
+tooling/_qa/
+tooling/_3d/
+tooling/_*.jpg
+android/
+.gradle/
+*.apk
