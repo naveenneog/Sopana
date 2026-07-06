@@ -1,0 +1,44 @@
+{
+  "id": "panchatantra",
+  "title": "Panchatantra Trail",
+  "subtitle": "wisdom and folly from the old fables",
+  "size": 100,
+  "cols": 10,
+  "assets": "assets/panchatantra",
+  "avatarLabel": "Your wanderer",
+  "goalLabel": "The Wise Ending",
+  "goalMeaning": "You reach the end wiser than you began — the true reward of every fable.",
+  "theme": {
+    "bg": "#161f0d",
+    "panel": "#243015",
+    "tileA": "#2e3c1a",
+    "tileB": "#394a22",
+    "accent": "#e0a53d",
+    "snake": "#c0392b",
+    "ladder": "#7cb342",
+    "text": "#f4ecd0",
+    "muted": "#b7a67a",
+    "font": "'Georgia', 'Noto Serif', serif"
+  },
+  "voice": { "web": "en-IN", "azure": "en-IN-NeerjaNeural" },
+  "ladders": [
+    { "from": 4,  "to": 25, "name": "Wit",         "en": "Wit of the Hare",     "meaning": "The clever hare lured the lion to a well — wit outmatches brute strength." },
+    { "from": 13, "to": 46, "name": "Teamwork",    "en": "Teamwork of the Doves","meaning": "The trapped doves flew up as one and carried off the hunter's net." },
+    { "from": 22, "to": 44, "name": "Loyalty",     "en": "Loyalty",             "meaning": "The faithful mongoose guarded the child even at its own peril." },
+    { "from": 33, "to": 60, "name": "Prudence",    "en": "Prudence",            "meaning": "Look before you leap — the cautious live to tell the tale." },
+    { "from": 42, "to": 71, "name": "Patience",    "en": "Patience",            "meaning": "The patient waited by the water, and in time the fish came." },
+    { "from": 50, "to": 84, "name": "Cleverness",  "en": "Cleverness",          "meaning": "A clever plan slips free of the strongest trap." },
+    { "from": 74, "to": 92, "name": "Friendship",  "en": "Friendship",          "meaning": "Mouse, crow, turtle and deer — true friends saved one another." }
+  ],
+  "snakes": [
+    { "from": 28, "to": 6,  "name": "Greed",         "en": "Greed of the Jackal", "meaning": "The greedy jackal gnawed the bowstring and was slain by the arrow." },
+    { "from": 37, "to": 19, "name": "Vanity",        "en": "Vanity of the Crow",  "meaning": "Flattered by the fox, the crow opened its beak and lost the cheese." },
+    { "from": 47, "to": 26, "name": "Gullibility",   "en": "Gullibility",         "meaning": "The trusting camel believed the sly friends — and was devoured." },
+    { "from": 55, "to": 34, "name": "Rashness",      "en": "Rashness",            "meaning": "In haste she struck down the loyal mongoose, and wept ever after." },
+    { "from": 68, "to": 51, "name": "Foolish Trust", "en": "Foolish Trust",       "meaning": "The frogs invited the snake to rule them — and were eaten one by one." },
+    { "from": 79, "to": 24, "name": "Pride",         "en": "Pride",               "meaning": "The proud tortoise opened its mouth to boast — and fell from the sky." },
+    { "from": 87, "to": 36, "name": "Meddling",      "en": "Meddling",            "meaning": "The meddling monkey pulled the wedge, and the log crushed him." },
+    { "from": 95, "to": 42, "name": "Deceit",        "en": "Deceit",              "meaning": "The crane ate the fish it promised to save — deceit ends in ruin." },
+    { "from": 99, "to": 7,  "name": "Recklessness",  "en": "Recklessness",        "meaning": "One reckless leap at the summit undoes a lifetime of care." }
+  ]
+}

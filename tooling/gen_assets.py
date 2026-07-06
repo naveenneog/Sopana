@@ -51,11 +51,23 @@ STYLE = {
         "vector style, vivid friendly colors, soft shadows, plain white background, a single "
         "centered subject, wholesome and playful. No text, no words, no watermark."
     ),
+    "founders": (
+        "Modern flat startup illustration, clean vector style, dark tech background with a subtle "
+        "neon grid, vivid electric-green and blue accents, a single centered subject, crisp and "
+        "professional. No text, no words, no watermark."
+    ),
+    "panchatantra": (
+        "Warm Indian folk-art illustration in the Panchatantra fable style, painterly, earthy "
+        "greens and ochres, expressive animals, a single centered subject, storybook mood. "
+        "No text, no words, no watermark."
+    ),
 }
 
 TOKEN = {
     "moksha": "The puppet depicts a serene pilgrim devotee with folded hands in anjali and a walking staff, a game piece for a spiritual board game.",
     "habits": "A happy friendly child-hero mascot with a big smile and a little cape, a cute game piece for a kids' board game.",
+    "founders": "A confident young founder in a hoodie holding a glowing lightbulb idea, a game piece for a startup board game.",
+    "panchatantra": "A wise wandering storyteller with a walking staff and a rolled scroll, a game piece for a folk-tale board game.",
 }
 
 BOARD = {
@@ -66,6 +78,12 @@ BOARD = {
     "habits": ("A bright cheerful board-game backdrop: soft pastel sky with fluffy clouds and a "
                "winding path leading up to a big golden star at the top, playful and airy, "
                "low-contrast toward the centre so a grid stays readable. No text."),
+    "founders": ("A sleek dark startup-themed board-game backdrop: a glowing neon path / rocket "
+                 "trajectory rising to a golden trophy at the top, subtle tech grid, deep navy, "
+                 "low-contrast toward the centre so a grid stays readable. No text."),
+    "panchatantra": ("A warm folk-art forest backdrop: a winding earthen path through stylised "
+                     "trees up to a great banyan tree at the top, earthy greens and ochres, "
+                     "low-contrast toward the centre so a grid stays readable. No text."),
 }
 
 # motif per virtue (ladder) / vice (snake), keyed by the manifest `name`
@@ -107,6 +125,42 @@ MOTIF = {
         "Wasting food": "a child dropping good food into a bin, looking unsure",
         "Forgetting": "a child forgetting to say thank you, hand on head",
     },
+    "founders": {
+        "Product–Market Fit": "a magnet pulling eager customers toward a glowing product",
+        "Mentorship": "a seasoned mentor guiding a young founder up a step",
+        "Runway Discipline": "a lean rocket with a carefully measured fuel gauge",
+        "Grit": "a determined founder pushing a heavy boulder uphill, jaw set",
+        "Shipping Velocity": "a paper plane launching fast with a glowing speed trail",
+        "Customer Obsession": "a founder listening intently to a delighted customer",
+        "Focus": "a single laser beam cutting through many distractions to one bright target",
+        "Vanity Metrics": "a giant balloon of likes and charts about to pop over an empty wallet",
+        "Scope Creep": "a to-do list growing monstrously and tangling a tiny team",
+        "Cofounder Conflict": "two founders in a tense tug-of-war over a cracked logo",
+        "Premature Scaling": "a tiny startup crushed under an oversized empty office",
+        "Ignoring Customers": "a founder with headphones on, back turned to knocking customers",
+        "Burnout": "an exhausted founder slumped at a desk, cold coffee, glowing screen",
+        "Cash Burn": "dollar bills burning in a fire beneath a draining bank meter",
+        "Hubris": "a smug founder on a pedestal about to slip on a banana peel",
+        "Feature Creep": "a bloated app stuffed with too many buttons, sinking",
+    },
+    "panchatantra": {
+        "Wit": "a small clever hare outsmarting a big lion beside a stone well",
+        "Teamwork": "many doves lifting a hunter's net together into the sky",
+        "Loyalty": "a brave mongoose standing guard over a baby's wooden cradle",
+        "Prudence": "a cautious deer pausing to look before a hidden rope snare",
+        "Patience": "a still crane waiting calmly by a pond as fish approach",
+        "Cleverness": "a clever crow dropping pebbles to raise the water in a pot",
+        "Friendship": "a mouse, crow, turtle and deer helping each other in a forest",
+        "Greed": "a greedy jackal gnawing a taut bowstring with an arrow poised",
+        "Vanity": "a vain crow singing as a piece of cheese falls to a waiting fox",
+        "Gullibility": "a trusting camel led astray by grinning jackal companions",
+        "Rashness": "a startled woman raising a stick over a loyal mongoose in haste",
+        "Foolish Trust": "frightened frogs riding on the back of a smiling hungry snake",
+        "Pride": "a proud tortoise gripping a stick between two flying birds, mouth open",
+        "Meddling": "a curious monkey pulling a wooden wedge from a split log",
+        "Deceit": "a sly crane standing over a fish it promised to carry to safety",
+        "Recklessness": "a reckless animal leaping off a high cliff without looking",
+    },
 }
 
 
@@ -119,8 +173,14 @@ def entry_prompt(world_id, entry, kind):
         mood = "radiant and uplifting" if kind == "ladder" else "ominous and cautionary"
         return (f"{STYLE['moksha']} The puppet depicts {concept}, {role} "
                 f'{entry.get("en") or entry["name"]}. {mood.capitalize()} composition.')
-    role = "a good habit" if kind == "ladder" else "a habit to avoid"
-    return f"{STYLE['habits']} The illustration shows {concept} — {role}."
+    roles = {
+        "habits": ("a good habit", "a habit to avoid"),
+        "founders": ("a startup virtue that lifts a founder up", "a startup pitfall that drags a founder down"),
+        "panchatantra": ("a wisdom from the fables", "a folly from the fables"),
+    }
+    good, bad = roles.get(world_id, ("a good quality", "a bad quality"))
+    role = good if kind == "ladder" else bad
+    return f"{STYLE.get(world_id, STYLE['habits'])} The illustration shows {concept} — {role}."
 
 
 # ---- image generation ------------------------------------------------------

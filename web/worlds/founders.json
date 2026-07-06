@@ -1,0 +1,44 @@
+{
+  "id": "founders",
+  "title": "Founder's Climb",
+  "subtitle": "the startup journey to product–market fit",
+  "size": 100,
+  "cols": 10,
+  "assets": "assets/founders",
+  "avatarLabel": "Your founder",
+  "goalLabel": "Exit",
+  "goalMeaning": "Product–market fit and a sustainable exit. You built something people want.",
+  "theme": {
+    "bg": "#0a0f1a",
+    "panel": "#0f1830",
+    "tileA": "#12203a",
+    "tileB": "#182a4a",
+    "accent": "#3ddc84",
+    "snake": "#ff5c5c",
+    "ladder": "#3ddc84",
+    "text": "#e6f0ff",
+    "muted": "#8aa0c0",
+    "font": "'Segoe UI', 'Trebuchet MS', sans-serif"
+  },
+  "voice": { "web": "en-US", "azure": "en-US-GuyNeural" },
+  "ladders": [
+    { "from": 4,  "to": 25, "name": "Product–Market Fit", "en": "Product–Market Fit", "meaning": "Customers pull the product from your hands — everything gets easier." },
+    { "from": 13, "to": 46, "name": "Mentorship",         "en": "Mentorship",         "meaning": "A wise mentor saves you years of costly mistakes." },
+    { "from": 22, "to": 44, "name": "Runway Discipline",  "en": "Runway Discipline",  "meaning": "Spend like it's your last dollar; your runway is your lifeline." },
+    { "from": 33, "to": 60, "name": "Grit",               "en": "Grit",               "meaning": "The startup that refuses to die usually wins." },
+    { "from": 42, "to": 71, "name": "Shipping Velocity",  "en": "Shipping Velocity",  "meaning": "Ship, learn, repeat — speed is your unfair advantage." },
+    { "from": 50, "to": 84, "name": "Customer Obsession", "en": "Customer Obsession", "meaning": "Fall in love with the problem and the customer, not your solution." },
+    { "from": 74, "to": 92, "name": "Focus",              "en": "Focus",              "meaning": "Say no to a hundred good ideas to nail the one that matters." }
+  ],
+  "snakes": [
+    { "from": 28, "to": 6,  "name": "Vanity Metrics",     "en": "Vanity Metrics",     "meaning": "Impressive charts, empty bank. Down you go." },
+    { "from": 37, "to": 19, "name": "Scope Creep",        "en": "Scope Creep",        "meaning": "Just one more feature… and the launch slips again." },
+    { "from": 47, "to": 26, "name": "Cofounder Conflict", "en": "Cofounder Conflict", "meaning": "A house divided ships nothing." },
+    { "from": 55, "to": 34, "name": "Premature Scaling",  "en": "Premature Scaling",  "meaning": "You poured fuel on a fire that wasn't lit." },
+    { "from": 68, "to": 51, "name": "Ignoring Customers", "en": "Ignoring Customers", "meaning": "You built what nobody asked for." },
+    { "from": 79, "to": 24, "name": "Burnout",            "en": "Burnout",            "meaning": "You ran the sprint as a marathon and collapsed." },
+    { "from": 87, "to": 36, "name": "Cash Burn",          "en": "Cash Burn",          "meaning": "The money ran out before the magic did." },
+    { "from": 95, "to": 42, "name": "Hubris",             "en": "Hubris",             "meaning": "Success went to your head, right before the fall." },
+    { "from": 99, "to": 7,  "name": "Feature Creep",      "en": "Feature Creep",      "meaning": "Bloated, late, and beaten by a simpler rival." }
+  ]
+}
