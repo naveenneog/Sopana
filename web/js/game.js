@@ -1,5 +1,6 @@
 // game.js — UI + interaction layer. All pure rules live in logic.js.
 import { squareToRenderCell, rollDie, resolveMove, validateWorld, indexWorld } from './logic.js';
+import { buildSnakeSvg, getSnakeStyle } from './snakes.js';
 
 const $ = (s) => document.querySelector(s);
 const boardEl = $('#board');
@@ -152,27 +153,7 @@ function drawLadder(l, group) {
 }
 
 function drawSnake(s, group) {
-  const a = centerOf(s.from), b = centerOf(s.to); // head at `from`, tail at `to`
-  const dx = b.x - a.x, dy = b.y - a.y;
-  const len = Math.hypot(dx, dy) || 1;
-  const px = -dy / len, py = dx / len;
-  const amp = Math.min(9, len * 0.22);
-  const c1x = a.x + dx * 0.33 + px * amp, c1y = a.y + dy * 0.33 + py * amp;
-  const c2x = a.x + dx * 0.66 - px * amp, c2y = a.y + dy * 0.66 - py * amp;
-  const path = document.createElementNS(SVGNS, 'path');
-  path.setAttribute('d', `M ${a.x} ${a.y} C ${c1x} ${c1y}, ${c2x} ${c2y}, ${b.x} ${b.y}`);
-  path.setAttribute('class', 'snake-body');
-  group.appendChild(path);
-  const head = document.createElementNS(SVGNS, 'circle');
-  head.setAttribute('cx', a.x); head.setAttribute('cy', a.y); head.setAttribute('r', 2.2);
-  head.setAttribute('class', 'snake-head');
-  group.appendChild(head);
-  for (const sgn of [-1, 1]) {
-    const eye = document.createElementNS(SVGNS, 'circle');
-    eye.setAttribute('cx', a.x + px * 0.8 * sgn); eye.setAttribute('cy', a.y + py * 0.8 * sgn);
-    eye.setAttribute('r', 0.5); eye.setAttribute('class', 'snake-eye');
-    group.appendChild(eye);
-  }
+  group.appendChild(buildSnakeSvg(centerOf(s.from), centerOf(s.to), getSnakeStyle(world), `${world.id}-${s.from}`));
 }
 
 function drawConnectors() {

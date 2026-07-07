@@ -146,6 +146,14 @@ body {
 .conn.dim { opacity: 0.28; }
 .conn.active { filter: drop-shadow(0 0 3px var(--accent)); opacity: 1; }
 
+/* ---- animated themed snakes ---- */
+@keyframes snakeSway { 0%, 100% { transform: rotate(-0.5deg); } 50% { transform: rotate(0.5deg); } }
+@keyframes tongueFlick { 0%, 66%, 100% { transform: scaleX(0.12); opacity: 0.35; } 78%, 90% { transform: scaleX(1); opacity: 1; } }
+.snake { transform-box: fill-box; transform-origin: 50% 92%; animation: snakeSway 5.5s ease-in-out infinite; }
+.snake .tongue { transform-box: fill-box; transform-origin: 100% 50%; animation: tongueFlick 2.4s ease-in-out infinite; }
+.snake-glow { filter: drop-shadow(0 0 0.9px var(--accent)); }
+@media (prefers-reduced-motion: reduce) { .snake, .snake .tongue { animation: none; } }
+
 /* ---- Token ---- */
 .token {
   position: absolute;
