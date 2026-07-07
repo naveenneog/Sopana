@@ -4,6 +4,7 @@
 import * as PIXI from '../vendor/pixi.min.mjs';
 import { rollDie, resolveMove } from './logic.js';
 import { audio } from './audio.js';
+import { gameForWorld, charOf } from './config.js';
 
 const WORLD_W = 1000;
 const COLS = 10;
@@ -141,6 +142,13 @@ async function main() {
   REALM_SUFFIX = world.id === 'moksha' ? '-loka' : '';
   audio.setProfile(world.sound || world.id);
   const IMG = `${CINE_ASSETS}/img`;
+  const cine = gameForWorld(world);
+  const cinePlayers = cine.players.map((pl) => {
+    const ch = charOf(world, pl.char);
+    return { name: pl.name, colorHex: pl.color, color: hexToInt(pl.color), glyph: (ch && ch.glyph) || '●', pos: 1 };
+  });
+  let cineCur = 0;
+  const cineMulti = cinePlayers.length > 1;
   const tex = await PIXI.Assets.load([`${IMG}/token.png`, `${IMG}/board.png`]);
 
   // ---- layers ----
@@ -205,6 +213,7 @@ async function main() {
   const baseScale = (ROW_H * 0.92) / pilgrim.texture.height;
   pilgrim.scale.set(baseScale);
   pilgrim.blendMode = PIXI.BLEND_MODES.ADD; // backlit puppet glows instead of a black box
+  pilgrim.tint = cinePlayers[cineCur].color; // adopt the current player's colour
   worldLayer.addChild(pilgrim);
 
   // ---- dice ----
@@ -229,6 +238,7 @@ async function main() {
   steps[0].light();
   temple.tint = currentRealm.temple;
   renderJournal();
+  updateCineTurn();
 
   // ---- ticker: scale, camera follow, parallax, sway, embers ----
   app.ticker.add((delta) => {
@@ -325,9 +335,9 @@ async function main() {
     introVideo.onended = finish;
     introVideo.onerror = finish; // no / failed intro -> straight into the game
     skipIntro.onclick = finish;
-    if (worldFile !== 'moksha') { finish(); return; } // only Moksha has the Sora intro
+    const introSrc = worldFile === 'moksha' ? 'assets/intro.mp4' : `${CINE_ASSETS}/intro.mp4`;
     introVideo.muted = !audio.isEnabled();
-    introVideo.src = 'assets/intro.mp4';
+    introVideo.src = introSrc; // per-theme Sora intro; onerror -> finish() if absent
     introVideo.style.display = 'block';
     skipIntro.style.display = 'block';
     $('#startInner').style.display = 'none'; // clear the title once the intro plays
@@ -335,13 +345,16 @@ async function main() {
     if (p && typeof p.catch === 'function') p.catch(finish);
     // safety: if playback never really starts, don't leave the player stuck
     setTimeout(() => { if (!done && (introVideo.readyState < 2 || introVideo.paused)) finish(); }, 4500);
+    // hard backstop: even if the video stalls mid-playback, never hang past the clip length
+    setTimeout(() => { if (!done) finish(); }, 12000);
   }
   beginBtn.addEventListener('click', begin);
 
   async function roll() {
-    if (!started || busy || pos >= 100) return;
+    if (!started || busy || cinePlayers[cineCur].pos >= 100) return;
     audio.resume();
     busy = true;
+    pos = cinePlayers[cineCur].pos;
     $('#roll').disabled = true;
     hideCard();
 
@@ -371,30 +384,62 @@ async function main() {
     const nr = realmOf(pos);
     if (nr !== currentRealm) await curtainWipe(nr);
 
+    cinePlayers[cineCur].pos = pos;
+
     if (res.won || pos >= 100) {
-      setRealmTitle({ name: 'Mokṣa', en: 'Liberation', theme: 'attained — free from the wheel of birth and death' });
+      const p = cinePlayers[cineCur];
+      setRealmTitle(cineMulti
+        ? { name: p.name, en: '', theme: 'reaches the summit first' }
+        : { name: 'Mokṣa', en: 'Liberation', theme: 'attained — free from the wheel of birth and death' });
       showRealmTitle();
-      $('#status').textContent = '॥ Mokṣa — liberation attained ॥';
+      $('#status').textContent = cineMulti ? `॥ ${p.glyph} ${p.name} wins ॥` : '॥ Mokṣa — liberation attained ॥';
       $('#restartBtn').style.display = 'inline-block';
+      busy = false;
+      return;
+    }
+
+    if (cineMulti) {
+      cineCur = (cineCur + 1) % cinePlayers.length;
+      pos = cinePlayers[cineCur].pos;
+      placePilgrim(pos);
+      pilgrim.tint = cinePlayers[cineCur].color;
+      const r2 = realmOf(pos);
+      if (r2 !== currentRealm) setRealm(r2);
+      curCamY = null; // snap the camera to the next player
+      updateCineTurn();
     } else {
       $('#status').textContent = `On step ${pos}`;
     }
     busy = false;
-    if (pos < 100) $('#roll').disabled = false;
+    $('#roll').disabled = false;
+  }
+
+  function updateCineTurn() {
+    const p = cinePlayers[cineCur];
+    const badge = $('#cineTurn');
+    if (badge) {
+      badge.style.display = cineMulti ? 'flex' : 'none';
+      badge.innerHTML = `<span style="width:12px;height:12px;border-radius:50%;display:inline-block;background:${p.colorHex};box-shadow:0 0 8px ${p.colorHex}"></span> ${p.glyph} ${p.name}`;
+    }
+    if (cineMulti) $('#status').textContent = `${p.glyph} ${p.name}'s turn — roll`;
   }
 
   function restart() {
     steps.forEach((s) => { s.glow.alpha = 0; });
+    cinePlayers.forEach((p) => (p.pos = 1));
+    cineCur = 0;
     pos = 1;
     steps[0].light();
     setRealm(REALMS[0]);
     audio.setRealm(0);
     placePilgrim(1);
+    pilgrim.tint = cinePlayers[0].color;
     curCamY = null;
     hideRealmTitle();
     $('#restartBtn').style.display = 'none';
     $('#roll').disabled = false;
-    $('#status').textContent = 'On step 1';
+    updateCineTurn();
+    if (!cineMulti) $('#status').textContent = 'On step 1';
   }
 
   // ---- movement ----

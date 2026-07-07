@@ -7,6 +7,12 @@ tooling/_intro/
 tooling/_qa/
 tooling/_3d/
 tooling/_*.jpg
+tooling/_*.png
+tooling/_*.mjs
+tooling/_*.log
+tooling/_*/
+tooling/__pycache__/
+*.pyc
 android/
 .gradle/
 *.apk

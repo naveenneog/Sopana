@@ -4,10 +4,19 @@
 Indian *Moksha Patam*), where every snake and ladder is a lesson: land on one and it animates,
 a card appears, and a narrator **reads its meaning aloud**.
 
+Open the game and you land in the **lobby** (`setup.html`): pick a **theme**, a **mode**,
+**1–4 players** and a **character** for each — then play local **pass-and-play multiplayer**.
+
 Three ways to play, all in this repo (served from `web/`):
-- **Board** (`index.html`) — the classic 2D board, multi-theme.
-- **Cinematic** (`cinematic.html`) — a 2.5D backlit shadow-puppet ascent with a Sora-2 intro.
-- **3D** (`play3d.html`) — a real 3D board with **shifting camera angles** (drag to orbit, scroll to zoom).
+- **Board** (`board.html`) — the classic 2D board with animated themed snakes and a live
+  turn roster; every player gets a coloured token.
+- **Cinematic** (`cinematic.html`) — a 2.5D backlit shadow-puppet ascent with a **per-theme
+  Sora-2 intro** and an adaptive procedural score.
+- **3D** (`play3d.html`) — a real 3D board with **shifting camera angles** (drag to orbit,
+  scroll to zoom), a themed environment and player-coloured pawns.
+
+Each **theme** carries its own **art, narration, sound design, intro film and environment**,
+and you can switch theme mid-game from any mode. `index.html` redirects into the lobby.
 
 **Play on the web** via GitHub Pages, or **install the Android APK** from the Releases page
 (built by CI with Capacitor). Licensed under PolyForm Noncommercial 1.0.0.
@@ -34,6 +43,8 @@ Each world is one file in `web/worlds/*.json`:
 | File | World | Snakes are… | Ladders are… |
 |------|-------|-------------|--------------|
 | `moksha.json` | Moksha Path | the vices (Kama, Krodha, Lobha…) | the virtues (Shraddha, Daana, Jnana…) |
+| `founders.json` | Founder's Climb | startup pitfalls | startup wins |
+| `panchatantra.json` | Panchatantra Trail | follies from the fables | wisdom from the fables |
 | `habits.json` | Habit Heroes | kids' bad habits | kids' good habits |
 
 Every snake/ladder entry: `{ "from", "to", "name", "en", "meaning" }`.

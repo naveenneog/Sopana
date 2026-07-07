@@ -5,6 +5,9 @@ import * as THREE from '../vendor/three.module.js';
 import { squareToCell, rollDie, resolveMove, indexWorld } from './logic.js';
 import { audio } from './audio.js';
 import { getSnakeStyle } from './snakes.js';
+import { gameForWorld, charOf } from './config.js';
+
+const hexInt = (h) => parseInt(String(h || '#000').replace('#', ''), 16) || 0;
 
 const $ = (s) => document.querySelector(s);
 const TILE = 1;
@@ -56,32 +59,49 @@ async function main() {
   document.title = `${world.title} — 3D`;
   { const tEl = document.querySelector('#title'); if (tEl) tEl.textContent = world.title; }
 
+  // themed environment palette (from world.theme)
+  const T = world.theme || {};
+  const C = {
+    bg: hexInt(T.bg || '#0b0704'), panel: hexInt(T.panel || '#231208'), accent: hexInt(T.accent || '#e8a33d'),
+    tileA: hexInt(T.tileA || '#2e1c10'), tileB: hexInt(T.tileB || '#3a2616'),
+    ladder: hexInt(T.ladder || '#2f4a22'), snake: hexInt(T.snake || '#52241c'),
+  };
+
+  // players (local hotseat) + chosen characters
+  const game = gameForWorld(world);
+  const players = game.players.map((pl) => {
+    const ch = charOf(world, pl.char);
+    return { name: pl.name, colorHex: pl.color, color: hexInt(pl.color), glyph: (ch && ch.glyph) || '●', pos: 1 };
+  });
+  let current = 0;
+  const multi = players.length > 1;
+
   const renderer = new THREE.WebGLRenderer({ antialias: true });
   renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
   renderer.setSize(window.innerWidth, window.innerHeight);
   $('#stage').appendChild(renderer.domElement);
 
   const scene = new THREE.Scene();
-  scene.background = new THREE.Color(0x0b0704);
-  scene.fog = new THREE.Fog(0x0b0704, 20, 44);
+  scene.background = new THREE.Color(C.bg);
+  scene.fog = new THREE.Fog(C.bg, 20, 44);
 
   const camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 200);
 
-  scene.add(new THREE.HemisphereLight(0xffd9a0, 0x140c06, 0.55));
-  const key = new THREE.DirectionalLight(0xffcf8a, 1.15);
+  scene.add(new THREE.HemisphereLight(C.accent, C.panel, 0.5));
+  const key = new THREE.DirectionalLight(0xfff2e0, 1.1);
   key.position.set(7, 13, 5);
   scene.add(key);
-  const fill = new THREE.PointLight(0xe8783a, 0.6, 40);
+  const fill = new THREE.PointLight(C.accent, 0.7, 40);
   fill.position.set(-6, 5, -4);
   scene.add(fill);
-  scene.add(new THREE.AmbientLight(0x3a2412, 0.5));
+  scene.add(new THREE.AmbientLight(C.panel, 0.55));
 
   const board = new THREE.Group();
   scene.add(board);
 
   const base = new THREE.Mesh(
     new THREE.BoxGeometry(10.8, 0.5, 10.8),
-    new THREE.MeshStandardMaterial({ color: 0x1a1008, roughness: 0.95 }),
+    new THREE.MeshStandardMaterial({ color: C.panel, roughness: 0.95 }),
   );
   base.position.y = -0.35;
   board.add(base);
@@ -92,10 +112,10 @@ async function main() {
     const isL = idx.ladders.has(n);
     const isS = idx.snakes.has(n);
     const light = (Math.floor((n - 1) / 10) + ((n - 1) % 10)) % 2 === 0;
-    const color = n === 100 ? 0x6a4a12 : isL ? 0x2f4a22 : isS ? 0x52241c : light ? 0x2e1c10 : 0x3a2616;
+    const color = n === 100 ? C.accent : isL ? C.ladder : isS ? C.snake : light ? C.tileA : C.tileB;
     const tile = new THREE.Mesh(
       new THREE.BoxGeometry(0.94, 0.16, 0.94),
-      new THREE.MeshStandardMaterial({ color, roughness: 0.85, emissive: n === 100 ? 0x4a3208 : 0x000000 }),
+      new THREE.MeshStandardMaterial({ color, roughness: 0.85, emissive: n === 100 ? C.accent : 0x000000, emissiveIntensity: n === 100 ? 0.35 : 1 }),
     );
     tile.position.copy(p);
     board.add(tile);
@@ -106,8 +126,8 @@ async function main() {
   // Snakes & ladders are NOT drawn upfront (declutter) — each appears on landing.
 
   // ---- token (pawn) ----
-  const token = makePawn();
-  token.position.copy(tilePos(1));
+  const token = makePawn(players[current].color);
+  token.position.copy(tilePos(players[current].pos));
   board.add(token);
 
   // ---- die ----
@@ -193,8 +213,10 @@ async function main() {
   let speakStarted = false;
 
   async function roll() {
-    if (busy || pos >= 100) return;
+    const P = players[current];
+    if (busy || P.pos >= 100) return;
     busy = true;
+    pos = P.pos;
     $('#roll').disabled = true;
     if (!speakStarted) { audio.resume(); speakStarted = true; }
     hideCard();
@@ -224,10 +246,38 @@ async function main() {
       pos = res.hit.to;
     }
 
-    $('#status').textContent = pos >= 100 ? '॥ Moksha — you have won ॥' : `On step ${pos}`;
-    if (pos >= 100) $('#restart') && ($('#restart').style.display = 'inline-block');
+    players[current].pos = pos;
+    if (pos >= 100) {
+      $('#status').textContent = multi ? `🏆 ${players[current].glyph} ${players[current].name} wins!` : '॥ Moksha — you have won ॥';
+      if ($('#restart')) $('#restart').style.display = 'inline-block';
+      busy = false;
+      return;
+    }
+    if (multi) {
+      current = (current + 1) % players.length;
+      pos = players[current].pos;
+      token.position.copy(tilePos(pos)); token.position.y = 0;
+      tintPawn(players[current].color);
+      updateTurn();
+    } else {
+      $('#status').textContent = `On step ${pos}`;
+    }
     busy = false;
-    if (pos < 100) $('#roll').disabled = false;
+    $('#roll').disabled = false;
+  }
+
+  function tintPawn(c) {
+    const m = token.userData && token.userData.mat;
+    if (m) { m.color.setHex(c); m.emissive.setHex(c); m.emissiveIntensity = 0.22; }
+  }
+  function updateTurn() {
+    const P = players[current];
+    const badge = $('#p3dturn');
+    if (badge) {
+      badge.style.display = multi ? 'inline-flex' : 'none';
+      badge.innerHTML = `<span style="width:11px;height:11px;border-radius:50%;display:inline-block;background:${P.colorHex};box-shadow:0 0 8px ${P.colorHex}"></span> ${P.glyph} ${P.name}`;
+    }
+    if (multi) $('#status').textContent = `${P.glyph} ${P.name}'s turn`;
   }
 
   function hopTo(n) {
@@ -298,11 +348,15 @@ async function main() {
   $('#roll').addEventListener('click', roll);
   $('#viewBtn').addEventListener('click', () => { audio.resume(); goPreset(presetIdx + 1); });
   $('#restart').addEventListener('click', () => {
+    players.forEach((p) => (p.pos = 1));
+    current = 0;
     pos = 1;
     token.position.copy(tilePos(1)); token.position.y = 0;
+    tintPawn(players[0].color);
     $('#restart').style.display = 'none';
     $('#roll').disabled = false;
-    $('#status').textContent = 'On step 1';
+    updateTurn();
+    if (!multi) $('#status').textContent = 'On step 1';
     goPreset(0);
   });
   $('#muteBtn').addEventListener('click', () => {
@@ -319,6 +373,7 @@ async function main() {
     sel.addEventListener('change', () => { location.search = `?world=${sel.value}`; });
   }
   document.querySelectorAll('nav a').forEach((a) => { a.href = `${a.getAttribute('href').split('?')[0]}?world=${worldFile}`; });
+  updateTurn();
 
   window.__sl3dReady = true;
   window.__sl3d = {
@@ -492,12 +547,13 @@ function makeSnake(a, b) {
   return { group: g, curve };
 }
 
-function makePawn() {
+function makePawn(colorInt) {
   const g = new THREE.Group();
-  const mat = new THREE.MeshStandardMaterial({ color: 0xffcf7a, roughness: 0.3, metalness: 0.45, emissive: 0x5a3e0c });
+  const mat = new THREE.MeshStandardMaterial({ color: colorInt || 0xffcf7a, roughness: 0.35, metalness: 0.4, emissive: colorInt || 0x5a3e0c, emissiveIntensity: 0.22 });
   const base = new THREE.Mesh(new THREE.CylinderGeometry(0.28, 0.34, 0.2, 20), mat); base.position.y = 0.1; g.add(base);
   const body = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.24, 0.5, 20), mat); body.position.y = 0.46; g.add(body);
   const head = new THREE.Mesh(new THREE.SphereGeometry(0.2, 18, 18), mat); head.position.y = 0.82; g.add(head);
+  g.userData.mat = mat;
   return g;
 }
 

@@ -20,12 +20,12 @@ async function page(url) {
   return { p, errs };
 }
 
-// 1. index redirects to cinematic
+// 1. index redirects to the lobby (setup)
 {
   const { p, errs } = await page(`${BASE}/index.html`);
   await p.waitForTimeout(500);
   const here = p.url();
-  results.push(['index->cinematic redirect', here.includes('cinematic.html'), here]);
+  results.push(['index->setup redirect', here.includes('setup.html'), here]);
   await p.screenshot({ path: `${OUT}/1_index_redirect.png` });
   await p.close();
   if (errs.length) results.push(['index errors', false, errs.join(' | ')]);
@@ -37,7 +37,7 @@ async function page(url) {
   const nav = await p.$$eval('nav a', (as) => as.map((a) => a.textContent.trim()));
   const sel = await p.$eval('#worldSel', (s) => s.value).catch(() => null);
   const navWorld = await p.$eval('nav a[href*="board"]', (a) => a.getAttribute('href')).catch(() => null);
-  results.push(['cinematic nav has 3 modes', nav.length === 3, nav.join(',')]);
+  results.push(['cinematic nav has mode links', nav.length >= 3 && nav.includes('Board'), nav.join(',')]);
   results.push(['cinematic theme select = moksha', sel === 'moksha', String(sel)]);
   results.push(['cinematic nav carries ?world', navWorld && navWorld.includes('world=moksha'), String(navWorld)]);
   await p.screenshot({ path: `${OUT}/2_cinematic_moksha.png` });
@@ -45,17 +45,17 @@ async function page(url) {
   if (errs.length) results.push(['cinematic moksha errors', false, errs.join(' | ')]);
 }
 
-// 3. cinematic founders: theme applied, intro skipped (Begin -> game, no intro video shown)
+// 3. cinematic founders: theme applied, per-theme intro wired, game starts
 {
   const { p, errs } = await page(`${BASE}/cinematic.html?world=founders`);
   const sel = await p.$eval('#worldSel', (s) => s.value).catch(() => null);
   results.push(['cinematic theme select = founders', sel === 'founders', String(sel)]);
-  // Begin and confirm no intro video plays (non-moksha skips intro)
+  const introSrc = await p.$eval('#introVideo', (v) => v.getAttribute('src') || '').catch(() => '');
   await p.click('#beginBtn').catch(() => {});
-  await p.waitForTimeout(1800);
-  const introShown = await p.$eval('#introVideo', (v) => getComputedStyle(v).display !== 'none').catch(() => false);
+  await p.waitForTimeout(13000); // intro stalls headless -> hard backstop finish at 12s
+  const introSet = await p.$eval('#introVideo', (v) => v.src).catch(() => '');
   const started = await p.$eval('#startScreen', (s) => s.classList.contains('hide')).catch(() => false);
-  results.push(['founders intro skipped', introShown === false, `introShown=${introShown}`]);
+  results.push(['founders per-theme intro wired', introSet.includes('founders/intro.mp4'), introSet]);
   results.push(['founders game started', started === true, `startHidden=${started}`]);
   await p.screenshot({ path: `${OUT}/3_cinematic_founders.png` });
   await p.close();
@@ -67,7 +67,7 @@ async function page(url) {
   const { p, errs } = await page(`${BASE}/play3d.html?world=panchatantra`);
   const nav = await p.$$eval('nav a', (as) => as.map((a) => a.textContent.trim()));
   const sel = await p.$eval('#worldSel', (s) => s.value).catch(() => null);
-  results.push(['3d nav has 3 modes', nav.length === 3, nav.join(',')]);
+  results.push(['3d nav has mode links', nav.length >= 3 && nav.includes('Board'), nav.join(',')]);
   results.push(['3d theme select = panchatantra', sel === 'panchatantra', String(sel)]);
   await p.screenshot({ path: `${OUT}/4_play3d_panchatantra.png` });
   await p.close();
