@@ -49,6 +49,7 @@ async function main() {
   const params = new URLSearchParams(location.search);
   const worldFile = (params.get('world') || 'moksha').replace(/[^a-z]/gi, '');
   const world = await (await fetch(`worlds/${worldFile}.json`)).json();
+  audio.setProfile(world.sound || world.id);
   const idx = indexWorld(world);
   const snakeStyle = getSnakeStyle(world);
   AUDIO_BASE = world.assets || 'assets/moksha';

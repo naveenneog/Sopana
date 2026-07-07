@@ -21,6 +21,12 @@
     "font": "'Segoe UI', 'Trebuchet MS', sans-serif"
   },
   "voice": { "web": "en-US", "azure": "en-US-GuyNeural" },
+  "characters": [
+    { "id": "founder",  "name": "Founder",  "glyph": "🚀", "color": "#46c7b0" },
+    { "id": "engineer", "name": "Engineer", "glyph": "💻", "color": "#3ddc84" },
+    { "id": "designer", "name": "Designer", "glyph": "🎨", "color": "#7a5cff" },
+    { "id": "investor", "name": "Investor", "glyph": "💼", "color": "#e0c24a" }
+  ],
   "ladders": [
     { "from": 4,  "to": 25, "name": "Product–Market Fit", "en": "Product–Market Fit", "meaning": "Customers pull the product from your hands — everything gets easier." },
     { "from": 13, "to": 46, "name": "Mentorship",         "en": "Mentorship",         "meaning": "A wise mentor saves you years of costly mistakes." },

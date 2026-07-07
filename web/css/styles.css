@@ -290,6 +290,33 @@ body {
 }
 .player { display: flex; align-items: center; gap: 0.6rem; }
 .avatar { width: 54px; height: 68px; object-fit: contain; filter: drop-shadow(0 0 8px rgba(232, 163, 61, 0.6)); }
+
+/* ---- multiplayer tokens + roster ---- */
+.token.mp { position: absolute; display: grid; place-items: center; }
+.token.mp .ring {
+  position: absolute; width: 86%; height: 86%; border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #fffef8, var(--pc, #e8a33d) 66%, rgba(0, 0, 0, 0.55));
+  box-shadow: 0 0 12px var(--pc, #e8a33d), 0 2px 6px rgba(0, 0, 0, 0.6);
+}
+.token.mp .glyph { position: absolute; font-size: 62%; line-height: 1; filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.7)); pointer-events: none; }
+.token.mp.cur { z-index: 8; }
+.token.mp.cur .ring { animation: tokenPulse 1.15s ease-in-out infinite; }
+@keyframes tokenPulse {
+  0%, 100% { box-shadow: 0 0 10px var(--pc, #e8a33d), 0 2px 6px rgba(0, 0, 0, 0.6); }
+  50% { box-shadow: 0 0 22px var(--pc, #e8a33d), 0 0 34px var(--pc, #e8a33d), 0 2px 6px rgba(0, 0, 0, 0.6); }
+}
+.roster { display: flex; flex-direction: column; gap: 0.35rem; }
+.roster .rmp {
+  display: flex; align-items: center; gap: 0.5rem; padding: 0.3rem 0.55rem; border-radius: 10px;
+  border: 1px solid color-mix(in srgb, var(--pc, #e8a33d) 45%, transparent);
+  background: color-mix(in srgb, var(--pc, #e8a33d) 8%, transparent); transition: all 0.2s;
+}
+.roster .rmp.cur { box-shadow: 0 0 0 1px var(--pc, #e8a33d) inset, 0 0 16px color-mix(in srgb, var(--pc, #e8a33d) 40%, transparent); }
+.roster .rmp .g { font-size: 1.1rem; line-height: 1; }
+.roster .rmp .nm { flex: 1; color: var(--text); font-size: 0.92rem; }
+.roster .rmp .ps { font-variant-numeric: tabular-nums; color: var(--pc, #e8a33d); font-weight: bold; min-width: 1.6rem; text-align: right; }
+.roster .rmp.won .ps::after { content: ' 🏆'; }
+@media (prefers-reduced-motion: reduce) { .token.mp.cur .ring { animation: none; } }
 .avatar[hidden] { display: none; }
 .player span { color: var(--muted); font-size: 0.9rem; }
 .card .art {

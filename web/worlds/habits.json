@@ -21,6 +21,12 @@
   "assets": "assets/habits",
   "avatarLabel": "Your hero",
   "voice": { "web": "en-US", "azure": "en-US-AnaNeural", "style": "cheerful" },
+  "characters": [
+    { "id": "runner", "name": "Runner", "glyph": "🏃", "color": "#ff8a5c" },
+    { "id": "reader", "name": "Reader", "glyph": "📖", "color": "#5cc7ff" },
+    { "id": "sprout", "name": "Sprout", "glyph": "🌱", "color": "#5ad18a" },
+    { "id": "star",   "name": "Star",   "glyph": "⭐", "color": "#ffd24a" }
+  ],
   "ladders": [
     { "from": 3,  "to": 22, "name": "Sharing",        "en": "Sharing",        "meaning": "You shared your toy with a friend. Climb up, superstar!" },
     { "from": 11, "to": 28, "name": "Brushing teeth", "en": "Brushing teeth", "meaning": "Sparkly clean teeth! Up you go!" },

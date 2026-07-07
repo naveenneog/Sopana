@@ -1,6 +1,7 @@
 // game.js — UI + interaction layer. All pure rules live in logic.js.
 import { squareToRenderCell, rollDie, resolveMove, validateWorld, indexWorld } from './logic.js';
 import { buildSnakeSvg, getSnakeStyle } from './snakes.js';
+import { gameForWorld, charOf } from './config.js';
 
 const $ = (s) => document.querySelector(s);
 const boardEl = $('#board');
@@ -35,7 +36,8 @@ const SVGNS = 'http://www.w3.org/2000/svg';
 
 let world = null;
 let index = { ladders: new Map(), snakes: new Map() };
-let pos = 1;
+let players = [];
+let current = 0;
 let busy = false;
 let speakOn = true;
 let currentFinish = null; // resolver for an open reveal (used by Esc)
@@ -182,13 +184,78 @@ function highlightConnector(hit, on) {
   });
 }
 
-// --- token ---
-function placeToken(n, animate = true) {
-  const c = centerOf(n);
-  tokenEl.style.transition = animate ? '' : 'none';
-  tokenEl.style.left = c.x + '%';
-  tokenEl.style.top = c.y + '%';
-  if (!animate) requestAnimationFrame(() => (tokenEl.style.transition = ''));
+// --- tokens & players (local hotseat multiplayer) ---
+function makeTokenEl(p) {
+  const el = document.createElement('div');
+  el.className = 'token mp';
+  el.style.setProperty('--pc', p.color);
+  el.innerHTML = `<i class="ring"></i><b class="glyph">${p.glyph}</b>`;
+  boardWrap.appendChild(el);
+  return el;
+}
+
+// small fan-out so multiple tokens sharing a square stay legible
+function squareOffset(p) {
+  const mates = players.filter((q) => q.pos === p.pos);
+  if (mates.length <= 1) return { dx: 0, dy: 0 };
+  const k = mates.indexOf(p);
+  const ang = (k / mates.length) * Math.PI * 2 - Math.PI / 2;
+  return { dx: Math.cos(ang) * 1.8, dy: Math.sin(ang) * 1.8 };
+}
+
+function placePlayer(p, animate = true) {
+  if (!p.el) return;
+  const c = centerOf(p.pos);
+  const o = squareOffset(p);
+  p.el.style.transition = animate ? '' : 'none';
+  p.el.style.left = c.x + o.dx + '%';
+  p.el.style.top = c.y + o.dy + '%';
+  if (!animate) requestAnimationFrame(() => (p.el.style.transition = ''));
+}
+
+function placeAll(animate = true) { players.forEach((p) => placePlayer(p, animate)); }
+function currentPlayer() { return players[current]; }
+
+function highlightCurrent() {
+  const multi = players.length > 1;
+  players.forEach((q, i) => q.el && q.el.classList.toggle('cur', multi && i === current));
+}
+
+function renderRoster() {
+  const box = $('#roster');
+  if (box) {
+    box.hidden = players.length < 2;
+    box.innerHTML = '';
+    players.forEach((p, i) => {
+      const row = document.createElement('div');
+      row.className = 'rmp' + (i === current ? ' cur' : '') + (p.pos >= world.size ? ' won' : '');
+      row.style.setProperty('--pc', p.color);
+      row.innerHTML = `<b class="g">${p.glyph}</b><span class="nm">${p.name}</span><span class="ps">${p.pos}</span>`;
+      box.appendChild(row);
+    });
+  }
+  highlightCurrent();
+}
+
+function buildPlayers() {
+  players.forEach((p) => p.el && p.el.remove());
+  const cfg = gameForWorld(world);
+  players = cfg.players.map((pl) => {
+    const ch = charOf(world, pl.char);
+    return { name: pl.name, color: pl.color, char: pl.char, glyph: (ch && ch.glyph) || '●', pos: 1, el: null };
+  });
+  players.forEach((p) => (p.el = makeTokenEl(p)));
+  current = 0;
+  const solo = document.querySelector('.player');
+  if (solo) solo.style.display = 'none'; // roster replaces the single-avatar panel
+  tokenEl.style.display = 'none';
+}
+
+function announceTurn() {
+  const p = currentPlayer();
+  statusEl.textContent = players.length > 1
+    ? `${p.glyph} ${p.name}'s turn — press Roll.`
+    : 'Press Roll to begin your ascent.';
 }
 
 // --- speech ---
@@ -361,7 +428,9 @@ function showReveal(hit) {
 
 // --- turn loop ---
 async function takeTurn() {
-  if (busy || pos >= world.size) return;
+  if (busy) return;
+  const p = currentPlayer();
+  if (!p || p.pos >= world.size) return;
   busy = true;
   rollBtn.disabled = true;
   worldSelect.disabled = true;
@@ -372,37 +441,51 @@ async function takeTurn() {
   dieEl.setAttribute('aria-label', `Dice, current value ${r}`);
   setTimeout(() => dieEl.classList.remove('rolling'), 400);
 
-  const res = resolveMove(pos, r, world);
+  const res = resolveMove(p.pos, r, world);
+  const who = players.length > 1 ? `${p.name}: ` : '';
   statusEl.textContent = res.bounced
-    ? `Rolled ${r} — bounced back to ${res.landed}.`
-    : `Rolled ${r} — moved to ${res.landed}.`;
+    ? `${who}rolled ${r} — bounced back to ${res.landed}.`
+    : `${who}rolled ${r} — moved to ${res.landed}.`;
 
-  placeToken(res.landed);
+  p.pos = res.landed;
+  placeAll();
+  renderRoster();
   await delay(600);
 
   if (res.hit) {
     highlightConnector(res.hit, true);
     await showReveal(res.hit);
-    placeToken(res.to);
+    p.pos = res.to;
+    placeAll();
+    renderRoster();
     await delay(750);
     highlightConnector(res.hit, false);
     const verb = res.hit.type === 'ladder' ? 'climbed to' : 'slid down to';
-    statusEl.textContent = `${res.hit.name} — ${verb} ${res.to}.`;
+    statusEl.textContent = `${who}${res.hit.name} — ${verb} ${res.to}.`;
   }
 
-  pos = res.to;
+  p.pos = res.to;
+  renderRoster();
 
   if (res.won) {
-    showWin();
-  } else {
-    busy = false;
-    rollBtn.disabled = false;
-    worldSelect.disabled = false;
+    showWin(p);
+    return;
   }
+
+  if (players.length > 1) {
+    current = (current + 1) % players.length;
+    placeAll();
+    renderRoster();
+    announceTurn();
+  }
+  busy = false;
+  rollBtn.disabled = false;
+  worldSelect.disabled = false;
 }
 
-function showWin() {
-  winTitle.textContent = `🎉 ${world.goalLabel || 'You reached the top!'}`;
+function showWin(p) {
+  const name = players.length > 1 ? `${p.glyph} ${p.name} wins! ` : '';
+  winTitle.textContent = `🎉 ${name}${world.goalLabel || 'You reached the top!'}`;
   winMeaning.textContent = world.goalMeaning || '';
   winOverlay.hidden = false;
   requestAnimationFrame(() => winOverlay.classList.add('show'));
@@ -413,12 +496,14 @@ function resetGame() {
   winOverlay.classList.remove('show');
   winOverlay.hidden = true;
   reveal.hidden = true;
-  pos = 1;
+  players.forEach((p) => (p.pos = 1));
+  current = 0;
   busy = false;
   rollBtn.disabled = false;
   worldSelect.disabled = false;
-  placeToken(1, false);
-  statusEl.textContent = 'Press Roll to begin your ascent.';
+  placeAll(false);
+  renderRoster();
+  announceTurn();
 }
 
 async function loadWorld(url) {
@@ -435,6 +520,7 @@ async function loadWorld(url) {
   document.title = `${world.title} — Sopāna`;
   buildBoard();
   drawConnectors();
+  buildPlayers();
   resetGame();
 }
 
@@ -483,8 +569,10 @@ function syncModeLinks() {
   const id = worldSelect.value.replace(/^worlds\//, '').replace(/\.json$/, '');
   const c = $('#lnkCine');
   const d = $('#lnk3d');
+  const l = $('#lnkLobby');
   if (c) c.href = `cinematic.html?world=${id}`;
   if (d) d.href = `play3d.html?world=${id}`;
+  if (l) l.href = `setup.html?world=${id}`;
 }
 syncModeLinks();
 

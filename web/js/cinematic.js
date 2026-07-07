@@ -139,6 +139,7 @@ async function main() {
   CINE_ASSETS = world.assets || 'assets/moksha';
   REALMS = realmsFor(world);
   REALM_SUFFIX = world.id === 'moksha' ? '-loka' : '';
+  audio.setProfile(world.sound || world.id);
   const IMG = `${CINE_ASSETS}/img`;
   const tex = await PIXI.Assets.load([`${IMG}/token.png`, `${IMG}/board.png`]);
 

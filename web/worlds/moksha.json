@@ -21,6 +21,12 @@
   "assets": "assets/moksha",
   "avatarLabel": "Your pilgrim",
   "voice": { "web": "en-IN", "azure": "en-IN-Arjun:DragonHDLatestNeural" },
+  "characters": [
+    { "id": "pilgrim",  "name": "Pilgrim",  "glyph": "🧘", "color": "#e8a33d" },
+    { "id": "sage",     "name": "Sage",     "glyph": "🧔", "color": "#d9b64e" },
+    { "id": "devotee",  "name": "Devotee",  "glyph": "🙏", "color": "#c86a3a" },
+    { "id": "wanderer", "name": "Wanderer", "glyph": "🚶", "color": "#b0894a" }
+  ],
   "ladders": [
     { "from": 4,  "to": 25, "name": "Shraddha", "en": "Faith",        "meaning": "Faith steadies the seeker and lifts the heart toward the light." },
     { "from": 13, "to": 46, "name": "Daana",     "en": "Generosity",  "meaning": "What you give away freely returns to you as ascent." },

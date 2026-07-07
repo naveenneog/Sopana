@@ -21,6 +21,13 @@
     "font": "'Georgia', 'Noto Serif', serif"
   },
   "voice": { "web": "en-IN", "azure": "en-IN-NeerjaNeural" },
+  "characters": [
+    { "id": "lion",   "name": "Lion",   "glyph": "🦁", "color": "#e0a83a" },
+    { "id": "monkey", "name": "Monkey", "glyph": "🐒", "color": "#b57a44" },
+    { "id": "turtle", "name": "Turtle", "glyph": "🐢", "color": "#5aa06a" },
+    { "id": "crow",   "name": "Crow",   "glyph": "🐦", "color": "#6a6f86" },
+    { "id": "deer",   "name": "Deer",   "glyph": "🦌", "color": "#c88a4a" }
+  ],
   "ladders": [
     { "from": 4,  "to": 25, "name": "Wit",         "en": "Wit of the Hare",     "meaning": "The clever hare lured the lion to a well — wit outmatches brute strength." },
     { "from": 13, "to": 46, "name": "Teamwork",    "en": "Teamwork of the Doves","meaning": "The trapped doves flew up as one and carried off the hunter's net." },

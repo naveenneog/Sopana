@@ -26,6 +26,7 @@
         </label>
         <button id="muteBtn" class="ctrl toggle" aria-pressed="true" title="Read meanings aloud">🔊 Read aloud</button>
         <button id="newGameBtn" class="ctrl">↺ New game</button>
+        <a id="lnkLobby" class="ctrl" href="setup.html" style="text-decoration: none; display: inline-block;">⚙ Lobby</a>
         <a id="lnkCine" class="ctrl" href="cinematic.html" style="text-decoration: none; display: inline-block;">✨ Cinematic</a>
         <a id="lnk3d" class="ctrl" href="play3d.html" style="text-decoration: none; display: inline-block;">🎲 3D</a>
       </div>
@@ -40,6 +41,7 @@
 
       <aside class="hud">
         <div class="player"><img id="avatar" class="avatar" alt="" hidden /><span id="avatarLabel">You</span></div>
+        <div id="roster" class="roster" aria-label="Players" hidden></div>
         <div class="die-area">
           <button id="die" class="die" aria-label="Dice, current value 1">⚀</button>
           <button id="rollBtn" class="roll">Roll</button>
