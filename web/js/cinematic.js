@@ -14,7 +14,7 @@ const MARGIN_X = (WORLD_W - COLS * COL_W) / 2;
 const WORLD_H = ROWS * ROW_H;
 
 // Five lokas (realms) spanning the 100 steps — each with its own palette + story beat.
-const REALMS = [
+const MOKSHA_REALMS = [
   { from: 1, to: 20, name: 'Pṛthvī', en: 'Earth', theme: 'the journey begins in the world of form',
     bg: ['#1d1108', '#2a1408', '#080503'], glow: 0xffbf5c, step: 0x241408, ring: 0x6b4a22, ember: 0xffbf5c, temple: 0x9a6a3a },
   { from: 21, to: 40, name: 'Kāma', en: 'Desire', theme: 'through the fires of desire',
@@ -26,6 +26,25 @@ const REALMS = [
   { from: 81, to: 100, name: 'Mokṣa', en: 'Liberation', theme: 'and freed at last',
     bg: ['#2a2410', '#3a3420', '#0a0a06'], glow: 0xffe8a0, step: 0x3a3420, ring: 0xd9c060, ember: 0xffe8a0, temple: 0xffe8a0 },
 ];
+let REALMS = MOKSHA_REALMS;
+let REALM_SUFFIX = '-loka';
+let CINE_ASSETS = 'assets/moksha';
+function hexToInt(h) { return parseInt(String(h || '#000').replace('#', ''), 16) || 0; }
+function realmsFor(world) {
+  if (world.id === 'moksha') return MOKSHA_REALMS;
+  const t = world.theme || {};
+  const bg = [t.bg || '#160d08', t.panel || '#231208', '#070403'];
+  const names = ['Beginnings', 'Trials', 'The Climb', 'Mastery', world.goalLabel || 'The Summit'];
+  const out = [];
+  for (let i = 0; i < 5; i++) {
+    out.push({
+      from: i * 20 + 1, to: i * 20 + 20, name: names[i], en: '',
+      theme: `the ${['first', 'second', 'third', 'fourth', 'final'][i]} stretch of ${world.title}`,
+      bg, glow: hexToInt(t.accent), step: hexToInt(t.tileA), ring: hexToInt(t.ladder), ember: hexToInt(t.accent), temple: hexToInt(t.accent),
+    });
+  }
+  return out;
+}
 function realmOf(n) { return REALMS.find((r) => n >= r.from && n <= r.to) || REALMS[0]; }
 
 const $ = (s) => document.querySelector(s);
@@ -92,7 +111,7 @@ function renderJournal() {
 // ---- realm title card ----
 let titleLocked = false;
 function setRealmTitle(realm) {
-  $('#rtName').textContent = `॥ ${realm.name}-loka ॥`;
+  $('#rtName').textContent = `॥ ${realm.name}${REALM_SUFFIX} ॥`;
   $('#rtSub').textContent = `the realm of ${realm.en} — ${realm.theme}`;
 }
 function showRealmTitle() { $('#realmTitle').classList.add('show'); }
@@ -114,8 +133,13 @@ async function main() {
   });
   $('#stage').appendChild(app.view);
 
-  const world = await (await fetch('worlds/moksha.json')).json();
-  const IMG = 'assets/moksha/img';
+  const params = new URLSearchParams(location.search);
+  const worldFile = (params.get('world') || 'moksha').replace(/[^a-z]/gi, '');
+  const world = await (await fetch(`worlds/${worldFile}.json`)).json();
+  CINE_ASSETS = world.assets || 'assets/moksha';
+  REALMS = realmsFor(world);
+  REALM_SUFFIX = world.id === 'moksha' ? '-loka' : '';
+  const IMG = `${CINE_ASSETS}/img`;
   const tex = await PIXI.Assets.load([`${IMG}/token.png`, `${IMG}/board.png`]);
 
   // ---- layers ----
@@ -256,6 +280,13 @@ async function main() {
     $('#muteBtn').textContent = on ? '🔊' : '🔇';
     const v = $('#introVideo'); if (v) v.muted = !on;
   });
+  const wsel = $('#worldSel');
+  if (wsel) {
+    const WORLDS = [['moksha', 'Original'], ['founders', "Founder's Climb"], ['panchatantra', 'Panchatantra'], ['habits', 'Habit Heroes']];
+    wsel.innerHTML = WORLDS.map(([id, name]) => `<option value="${id}"${id === worldFile ? ' selected' : ''}>${name}</option>`).join('');
+    wsel.addEventListener('change', () => { location.search = `?world=${wsel.value}`; });
+  }
+  document.querySelectorAll('nav a').forEach((a) => { a.href = `${a.getAttribute('href').split('?')[0]}?world=${worldFile}`; });
   window.addEventListener('keydown', (e) => { if (e.code === 'Space' && started) { e.preventDefault(); roll(); } });
   window.__sopanaReady = true; // signal for screenshot QA
   window.__sopanaDebug = {
@@ -293,6 +324,7 @@ async function main() {
     introVideo.onended = finish;
     introVideo.onerror = finish; // no / failed intro -> straight into the game
     skipIntro.onclick = finish;
+    if (worldFile !== 'moksha') { finish(); return; } // only Moksha has the Sora intro
     introVideo.muted = !audio.isEnabled();
     introVideo.src = 'assets/intro.mp4';
     introVideo.style.display = 'block';
@@ -767,7 +799,7 @@ let audioEl = null;
 function playAudio(hit) {
   try {
     if (audioEl) audioEl.pause();
-    audioEl = new Audio(`assets/moksha/audio/${hit.type}-${hit.from}.mp3`);
+    audioEl = new Audio(`${CINE_ASSETS}/audio/${hit.type}-${hit.from}.mp3`);
     audioEl.play().catch(() => {});
   } catch { /* ignore */ }
 }

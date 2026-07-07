@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Sopāna — the ascent</title>
+    <link rel="stylesheet" href="css/styles.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="brand">
+        <span class="brand-mark" aria-hidden="true">॥</span>
+        <div>
+          <h1 id="worldTitle">Sopāna</h1>
+          <p id="worldSubtitle" class="subtitle">every roll teaches something</p>
+        </div>
+      </div>
+      <div class="controls">
+        <label class="ctrl">World
+          <select id="worldSelect">
+            <option value="worlds/moksha.json">Snake &amp; Ladders — Original</option>
+            <option value="worlds/founders.json">Founder's Climb</option>
+            <option value="worlds/panchatantra.json">Panchatantra Trail</option>
+            <option value="worlds/habits.json">Habit Heroes</option>
+          </select>
+        </label>
+        <button id="muteBtn" class="ctrl toggle" aria-pressed="true" title="Read meanings aloud">🔊 Read aloud</button>
+        <button id="newGameBtn" class="ctrl">↺ New game</button>
+        <a id="lnkCine" class="ctrl" href="cinematic.html" style="text-decoration: none; display: inline-block;">✨ Cinematic</a>
+        <a id="lnk3d" class="ctrl" href="play3d.html" style="text-decoration: none; display: inline-block;">🎲 3D</a>
+      </div>
+    </header>
+
+    <main class="stage">
+      <section class="board-wrap">
+        <div id="board" class="board" role="grid" aria-label="Game board"></div>
+        <svg id="overlay" class="overlay" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"></svg>
+        <div id="token" class="token" aria-hidden="true"><span></span></div>
+      </section>
+
+      <aside class="hud">
+        <div class="player"><img id="avatar" class="avatar" alt="" hidden /><span id="avatarLabel">You</span></div>
+        <div class="die-area">
+          <button id="die" class="die" aria-label="Dice, current value 1">⚀</button>
+          <button id="rollBtn" class="roll">Roll</button>
+        </div>
+        <p id="status" class="status" aria-live="polite">Press Roll to begin your ascent.</p>
+        <div class="legend">
+          <span><i class="chip ladder"></i> virtue → climb</span>
+          <span><i class="chip snake"></i> vice → fall</span>
+        </div>
+        <p class="hint">Space = roll · Esc = skip narration</p>
+      </aside>
+    </main>
+
+    <!-- Signature "Meaning Reveal" -->
+    <div id="reveal" class="reveal" hidden>
+      <div class="card" role="dialog" aria-modal="true" aria-labelledby="revealName">
+        <img id="revealArt" class="art" alt="" hidden />
+        <span id="revealKind" class="kind">Ladder</span>
+        <h2 id="revealName" class="name">Name</h2>
+        <p id="revealEn" class="en"></p>
+        <p id="revealMeaning" class="meaning" aria-live="assertive"></p>
+        <div class="card-actions">
+          <button id="skipBtn" class="ghost">Skip</button>
+          <button id="continueBtn" class="primary">Continue ▸</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Win -->
+    <div id="winOverlay" class="reveal" hidden>
+      <div class="card win">
+        <h2 id="winTitle">🎉 You reached the top!</h2>
+        <p id="winMeaning" class="meaning"></p>
+        <button id="winNewGame" class="primary">Play again</button>
+      </div>
+    </div>
+
+    <script type="module" src="js/game.js"></script>
+  </body>
+</html>

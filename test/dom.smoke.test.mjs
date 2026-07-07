@@ -7,7 +7,7 @@ import { fileURLToPath } from 'node:url';
 import { JSDOM } from 'jsdom';
 
 const webDir = fileURLToPath(new URL('../web/', import.meta.url));
-const html = await readFile(new URL('../web/index.html', import.meta.url), 'utf8');
+const html = await readFile(new URL('../web/board.html', import.meta.url), 'utf8');
 
 const waitFor = async (pred, ms = 2500) => {
   const t0 = Date.now();

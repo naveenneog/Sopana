@@ -4,6 +4,7 @@
 import * as THREE from '../vendor/three.module.js';
 import { squareToCell, rollDie, resolveMove, indexWorld } from './logic.js';
 import { audio } from './audio.js';
+import { getSnakeStyle } from './snakes.js';
 
 const $ = (s) => document.querySelector(s);
 const TILE = 1;
@@ -45,8 +46,14 @@ const PRESETS = [
 ];
 
 async function main() {
-  const world = await (await fetch('worlds/moksha.json')).json();
+  const params = new URLSearchParams(location.search);
+  const worldFile = (params.get('world') || 'moksha').replace(/[^a-z]/gi, '');
+  const world = await (await fetch(`worlds/${worldFile}.json`)).json();
   const idx = indexWorld(world);
+  const snakeStyle = getSnakeStyle(world);
+  AUDIO_BASE = world.assets || 'assets/moksha';
+  document.title = `${world.title} — 3D`;
+  { const tEl = document.querySelector('#title'); if (tEl) tEl.textContent = world.title; }
 
   const renderer = new THREE.WebGLRenderer({ antialias: true });
   renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
@@ -92,20 +99,10 @@ async function main() {
     tile.position.copy(p);
     board.add(tile);
     board.add(numberSprite(n, p, isL, isS));
+    if (isL || isS) board.add(makeMarker(p, isL));
   }
 
-  // ---- ladders + snakes ----
-  const snakeCurves = new Map(); // from -> curve
-  const ladderLines = new Map(); // from -> {a,b}
-  for (const l of world.ladders || []) {
-    board.add(makeLadder(tilePos(l.from), tilePos(l.to)));
-    ladderLines.set(l.from, { a: tilePos(l.from), b: tilePos(l.to) });
-  }
-  for (const s of world.snakes || []) {
-    const sn = makeSnake(tilePos(s.from), tilePos(s.to));
-    board.add(sn.group);
-    snakeCurves.set(s.from, sn.curve);
-  }
+  // Snakes & ladders are NOT drawn upfront (declutter) — each appears on landing.
 
   // ---- token (pawn) ----
   const token = makePawn();
@@ -218,12 +215,8 @@ async function main() {
       await wait(500);
       showCard(res.hit);
       playAudio(res.hit);
-      if (res.hit.type === 'ladder') {
-        const l = ladderLines.get(res.hit.from);
-        await climbLadder3d(l.a, l.b);
-      } else {
-        await slideSnake3d(snakeCurves.get(res.hit.from));
-      }
+      if (res.hit.type === 'ladder') await climbLadder3d(res.hit.from, res.hit.to);
+      else await slideSnake3d(res.hit.from, res.hit.to);
       await wait(1400);
       hideCard();
       goPreset(0); // back to isometric
@@ -246,23 +239,39 @@ async function main() {
       token.position.y = Math.sin(p * Math.PI) * 0.75;
     });
   }
-  async function climbLadder3d(a, b) {
+  function fadeMesh(group, from, to, ms) {
+    group.traverse((n) => { if (n.material) n.material.transparent = true; });
+    return tween(ms, (p) => {
+      const o = from + (to - from) * p;
+      group.traverse((n) => { if (n.material) n.material.opacity = o; });
+    });
+  }
+  async function climbLadder3d(from, to) {
+    const a = tilePos(from), b = tilePos(to);
+    const ladder = makeLadder(a, b);
+    board.add(ladder);
+    await fadeMesh(ladder, 0, 1, 400);
     audio.ladderGliss();
     await tween(1500, (p) => {
       const e = easeIO(p);
       token.position.x = a.x + (b.x - a.x) * e;
       token.position.z = a.z + (b.z - a.z) * e;
-      token.position.y = 0.15 + Math.sin(e * Math.PI) * 0.4 + e * 0.15;
+      token.position.y = 0.15 + Math.sin(e * Math.PI) * 0.5 + e * 0.15;
     });
     token.position.copy(b); token.position.y = 0;
+    await fadeMesh(ladder, 1, 0, 400);
+    board.remove(ladder);
   }
-  async function slideSnake3d(curve) {
+  async function slideSnake3d(from, to) {
+    const a = tilePos(from), b = tilePos(to);
+    const sn = makeSnake3d(a, b, snakeStyle);
+    board.add(sn.group);
+    await fadeMesh(sn.group, 0, 1, 400);
     audio.serpentHiss();
-    await tween(1600, (p) => {
-      const pt = curve.getPointAt(easeIO(p));
-      token.position.copy(pt);
-    });
+    await tween(1600, (p) => { token.position.copy(sn.curve.getPointAt(easeIO(p))); });
     token.position.y = 0;
+    await fadeMesh(sn.group, 1, 0, 400);
+    board.remove(sn.group);
   }
 
   async function rollDie3d(value) {
@@ -301,6 +310,15 @@ async function main() {
   });
   window.addEventListener('keydown', (e) => { if (e.code === 'Space') { e.preventDefault(); roll(); } });
 
+  // theme switcher (reloads with ?world=)
+  const WORLDS = [['moksha', 'Original'], ['founders', "Founder's Climb"], ['panchatantra', 'Panchatantra'], ['habits', 'Habit Heroes']];
+  const sel = $('#worldSel');
+  if (sel) {
+    sel.innerHTML = WORLDS.map(([id, name]) => `<option value="${id}"${id === worldFile ? ' selected' : ''}>${name}</option>`).join('');
+    sel.addEventListener('change', () => { location.search = `?world=${sel.value}`; });
+  }
+  document.querySelectorAll('nav a').forEach((a) => { a.href = `${a.getAttribute('href').split('?')[0]}?world=${worldFile}`; });
+
   window.__sl3dReady = true;
   window.__sl3d = {
     getPos: () => pos,
@@ -326,6 +344,94 @@ function numberSprite(n, p, isL, isS) {
   s.position.set(p.x, 0.14, p.z);
   s.scale.set(0.62, 0.62, 0.62);
   return s;
+}
+
+function makeMarker(p, isLadder) {
+  const m = new THREE.Mesh(
+    new THREE.TorusGeometry(0.34, 0.045, 8, 24),
+    new THREE.MeshStandardMaterial({ color: isLadder ? 0x3ddc84 : 0xff5c5c, emissive: isLadder ? 0x145a30 : 0x6a1616, emissiveIntensity: 0.6 }),
+  );
+  m.rotation.x = Math.PI / 2;
+  m.position.set(p.x, 0.13, p.z);
+  return m;
+}
+
+// a tube whose radius tapers head->tail, for a more realistic snake body
+function taperedTube(curve, rHead, rTail, seg = 48, rad = 9) {
+  const frames = curve.computeFrenetFrames(seg, false);
+  const pos = [], nor = [], idx = [];
+  const P = new THREE.Vector3();
+  for (let i = 0; i <= seg; i++) {
+    const t = i / seg;
+    curve.getPointAt(t, P);
+    const N = frames.normals[i], B = frames.binormals[i];
+    const r = rHead * (1 - t) + rTail * t;
+    for (let j = 0; j <= rad; j++) {
+      const v = (j / rad) * Math.PI * 2;
+      const si = Math.sin(v), co = -Math.cos(v);
+      const nx = co * N.x + si * B.x, ny = co * N.y + si * B.y, nz = co * N.z + si * B.z;
+      pos.push(P.x + r * nx, P.y + r * ny, P.z + r * nz);
+      nor.push(nx, ny, nz);
+    }
+  }
+  for (let i = 1; i <= seg; i++) for (let j = 1; j <= rad; j++) {
+    const a = (rad + 1) * (i - 1) + (j - 1), b = (rad + 1) * i + (j - 1), c = (rad + 1) * i + j, d = (rad + 1) * (i - 1) + j;
+    idx.push(a, b, d, b, c, d);
+  }
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+  geo.setAttribute('normal', new THREE.Float32BufferAttribute(nor, 3));
+  geo.setIndex(idx);
+  return geo;
+}
+
+function makeSnake3d(a, b, style) {
+  const dir = new THREE.Vector3().subVectors(b, a);
+  const perp = new THREE.Vector3(-dir.z, 0, dir.x).normalize();
+  const N = 6, pts = [];
+  for (let i = 0; i <= N; i++) {
+    const t = i / N;
+    const c = a.clone().lerp(b, t);
+    c.y = 0.34 + Math.sin(t * Math.PI) * 0.5;
+    c.add(perp.clone().multiplyScalar(Math.sin(t * Math.PI * 2) * 0.55));
+    pts.push(c);
+  }
+  const curve = new THREE.CatmullRomCurve3(pts);
+  const mat = new THREE.MeshStandardMaterial({
+    color: new THREE.Color(style.body1 || '#c0392b'),
+    roughness: 0.5,
+    emissive: new THREE.Color(style.glow ? style.body1 : '#200806'),
+    emissiveIntensity: style.glow ? 0.5 : 0.15,
+  });
+  const g = new THREE.Group();
+  g.add(new THREE.Mesh(taperedTube(curve, 0.3, 0.08, 48, 9), mat));
+  const head = new THREE.Mesh(new THREE.SphereGeometry(0.34, 16, 12), mat);
+  head.scale.set(1.1, 0.8, 1.35);
+  head.position.copy(pts[0]);
+  head.lookAt(pts[1]);
+  g.add(head);
+  const eyeMat = new THREE.MeshStandardMaterial({ color: new THREE.Color(style.eye || '#f0d24a'), emissive: 0x221a00 });
+  const puMat = new THREE.MeshStandardMaterial({ color: new THREE.Color(style.pupil || '#160d02') });
+  const fwd = dir.clone().normalize().multiplyScalar(-1); // out of the mouth
+  for (const s of [1, -1]) {
+    const off = perp.clone().multiplyScalar(0.16 * s).add(new THREE.Vector3(0, 0.16, 0));
+    const eye = new THREE.Mesh(new THREE.SphereGeometry(0.09, 10, 10), eyeMat);
+    eye.position.copy(pts[0]).add(off);
+    g.add(eye);
+    const pu = new THREE.Mesh(new THREE.SphereGeometry(0.045, 8, 8), puMat);
+    pu.position.copy(eye.position).add(fwd.clone().multiplyScalar(0.06));
+    g.add(pu);
+  }
+  const tongueMat = new THREE.MeshStandardMaterial({ color: new THREE.Color(style.tongue || '#c0392b') });
+  for (const s of [1, -1]) {
+    const tg = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.03, 0.3, 5), tongueMat);
+    const base = pts[0].clone().add(fwd.clone().multiplyScalar(0.24));
+    const tip = base.clone().add(fwd.clone().multiplyScalar(0.16)).add(perp.clone().multiplyScalar(0.08 * s));
+    tg.position.copy(base).lerp(tip, 0.5);
+    tg.lookAt(tip); tg.rotateX(Math.PI / 2);
+    g.add(tg);
+  }
+  return { group: g, curve };
 }
 
 function cylinderBetween(p1, p2, r, mat) {
@@ -429,11 +535,12 @@ function showCard(hit) {
   $('#card').classList.add('show');
 }
 function hideCard() { $('#card').classList.remove('show'); }
+let AUDIO_BASE = 'assets/moksha';
 let audioEl = null;
 function playAudio(hit) {
   try {
     if (audioEl) audioEl.pause();
-    audioEl = new Audio(`assets/moksha/audio/${hit.type}-${hit.from}.mp3`);
+    audioEl = new Audio(`${AUDIO_BASE}/audio/${hit.type}-${hit.from}.mp3`);
     audioEl.play().catch(() => {});
   } catch { /* ignore */ }
 }

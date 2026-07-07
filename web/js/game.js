@@ -445,6 +445,7 @@ newGameBtn.addEventListener('click', resetGame);
 winNewGame.addEventListener('click', resetGame);
 
 worldSelect.addEventListener('change', (e) => {
+  syncModeLinks();
   loadWorld(e.target.value).catch((err) => (statusEl.textContent = String(err.message || err)));
 });
 
@@ -471,5 +472,20 @@ if (window.speechSynthesis) {
   speechSynthesis.onvoiceschanged = () => {}; // trigger voice list load
   speechSynthesis.getVoices();
 }
+
+// honor ?world= (from mode nav / deep links) and keep mode links theme-aware
+const _wparam = new URLSearchParams(window.location.search).get('world');
+if (_wparam) {
+  const _opt = `worlds/${_wparam.replace(/[^a-z]/gi, '')}.json`;
+  if ([...worldSelect.options].some((o) => o.value === _opt)) worldSelect.value = _opt;
+}
+function syncModeLinks() {
+  const id = worldSelect.value.replace(/^worlds\//, '').replace(/\.json$/, '');
+  const c = $('#lnkCine');
+  const d = $('#lnk3d');
+  if (c) c.href = `cinematic.html?world=${id}`;
+  if (d) d.href = `play3d.html?world=${id}`;
+}
+syncModeLinks();
 
 loadWorld(worldSelect.value).catch((err) => (statusEl.textContent = String(err.message || err)));

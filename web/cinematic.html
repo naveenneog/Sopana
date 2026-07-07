@@ -23,7 +23,8 @@
       #realmTitle.show { opacity: 1; }
       #realmTitle .rt-name { font-size: 2.7rem; letter-spacing: 0.14em; color: #ffd98a; text-shadow: 0 0 28px rgba(232, 163, 61, 0.7); }
       #realmTitle .rt-sub { margin-top: 0.5rem; font-size: 1.05rem; color: #e8cfa0; font-style: italic; max-width: 80vw; }
-      #journalBtn, #muteBtn { font: inherit; font-size: 0.95rem; color: #f4e6cd; background: rgba(255, 255, 255, 0.06); border: 1px solid rgba(232, 163, 61, 0.4); border-radius: 12px; padding: 0.8rem 1rem; cursor: pointer; }
+      #journalBtn, #muteBtn, #worldSel { font: inherit; font-size: 0.95rem; color: #f4e6cd; background: rgba(255, 255, 255, 0.06); border: 1px solid rgba(232, 163, 61, 0.4); border-radius: 12px; padding: 0.8rem 1rem; cursor: pointer; }
+      #worldSel option { color: #241200; }
       #journal { position: fixed; top: 0; right: 0; bottom: 0; width: min(92vw, 360px); background: linear-gradient(180deg, #1c1108, #0d0704); border-left: 1px solid rgba(232, 163, 61, 0.4); box-shadow: -10px 0 40px rgba(0, 0, 0, 0.6); transform: translateX(100%); transition: transform 0.3s; z-index: 40; padding: 1.2rem; overflow-y: auto; }
       #journal.show { transform: translateX(0); }
       #journal h3 { color: #e8a33d; text-align: center; letter-spacing: 0.1em; margin: 0.2rem 0 1rem; }
@@ -46,13 +47,18 @@
     </style>
   </head>
   <body>
+    <nav style="position:fixed;top:.6rem;left:.6rem;z-index:70;display:flex;gap:.3rem">
+      <a href="cinematic.html" style="font:inherit;font-size:.8rem;color:#241200;background:#e8a33d;border:1px solid rgba(232,163,61,.5);border-radius:8px;padding:.3rem .6rem;text-decoration:none">Cinematic</a>
+      <a href="board.html" style="font:inherit;font-size:.8rem;color:#f4e6cd;background:rgba(0,0,0,.42);border:1px solid rgba(232,163,61,.35);border-radius:8px;padding:.3rem .6rem;text-decoration:none">Board</a>
+      <a href="play3d.html" style="font:inherit;font-size:.8rem;color:#f4e6cd;background:rgba(0,0,0,.42);border:1px solid rgba(232,163,61,.35);border-radius:8px;padding:.3rem .6rem;text-decoration:none">3D</a>
+    </nav>
     <div id="stage"></div>
     <div id="title">॥ Sopāna ॥</div>
     <div id="status">Roll to begin the ascent</div>
     <div id="card"><span id="cKind" class="kind"></span><h2 id="cName"></h2><p class="en" id="cEn"></p><p class="m" id="cMeaning"></p></div>
     <div id="realmTitle"><div id="rtName" class="rt-name"></div><div id="rtSub" class="rt-sub"></div></div>
     <div id="journal"><h3>॥ Reflection Journal ॥</h3><div id="jList"></div><button id="jClear">Clear</button><button id="jClose">Close</button></div>
-    <div id="hud"><button id="roll">Roll the die</button><button id="restartBtn" style="display: none;">↻ Begin again</button><button id="journalBtn">📜 Journal (<span id="jCount">0</span>)</button><button id="muteBtn" title="Sound on/off">🔊</button></div>
+    <div id="hud"><button id="roll">Roll the die</button><button id="restartBtn" style="display: none;">↻ Begin again</button><button id="journalBtn">📜 Journal (<span id="jCount">0</span>)</button><select id="worldSel" title="Theme"></select><button id="muteBtn" title="Sound on/off">🔊</button></div>
     <div id="startScreen">
       <video id="introVideo" playsinline preload="auto"></video>
       <button id="skipIntro">Skip ▶</button>
