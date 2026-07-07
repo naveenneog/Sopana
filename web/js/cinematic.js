@@ -29,19 +29,29 @@ const MOKSHA_REALMS = [
 ];
 let REALMS = MOKSHA_REALMS;
 let REALM_SUFFIX = '-loka';
+let INVOCATION_SUB = 'The soul begins its ascent to Mokṣa';
 let CINE_ASSETS = 'assets/moksha';
 function hexToInt(h) { return parseInt(String(h || '#000').replace('#', ''), 16) || 0; }
+function darkHex(h) {
+  const s = String(h || '#000').replace('#', '');
+  const n = parseInt(s, 16) || 0;
+  const r = (n >> 16) & 255, g = (n >> 8) & 255, b = n & 255;
+  const lum = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+  if (lum <= 0.4) return '#' + s.padStart(6, '0'); // already dark enough for the shadow theatre
+  const k = 0.16, to = (v) => Math.round(v * k).toString(16).padStart(2, '0');
+  return '#' + to(r) + to(g) + to(b);
+}
 function realmsFor(world) {
   if (world.id === 'moksha') return MOKSHA_REALMS;
   const t = world.theme || {};
-  const bg = [t.bg || '#160d08', t.panel || '#231208', '#070403'];
+  const bg = [darkHex(t.bg || '#160d08'), darkHex(t.panel || '#231208'), '#070403'];
   const names = ['Beginnings', 'Trials', 'The Climb', 'Mastery', world.goalLabel || 'The Summit'];
   const out = [];
   for (let i = 0; i < 5; i++) {
     out.push({
       from: i * 20 + 1, to: i * 20 + 20, name: names[i], en: '',
       theme: `the ${['first', 'second', 'third', 'fourth', 'final'][i]} stretch of ${world.title}`,
-      bg, glow: hexToInt(t.accent), step: hexToInt(t.tileA), ring: hexToInt(t.ladder), ember: hexToInt(t.accent), temple: hexToInt(t.accent),
+      bg, glow: hexToInt(t.accent), step: hexToInt(t.tileA), ring: hexToInt(t.ladder), ember: hexToInt(t.accent), temple: hexToInt(darkHex(t.accent)),
     });
   }
   return out;
@@ -119,7 +129,7 @@ function showRealmTitle() { $('#realmTitle').classList.add('show'); }
 function hideRealmTitle() { $('#realmTitle').classList.remove('show'); }
 function showInvocation() {
   $('#rtName').textContent = '॥ Sopāna ॥';
-  $('#rtSub').textContent = 'The soul begins its ascent to Mokṣa';
+  $('#rtSub').textContent = INVOCATION_SUB;
   showRealmTitle();
   setTimeout(() => { if (!titleLocked) hideRealmTitle(); }, 2600);
 }
@@ -140,7 +150,9 @@ async function main() {
   CINE_ASSETS = world.assets || 'assets/moksha';
   REALMS = realmsFor(world);
   REALM_SUFFIX = world.id === 'moksha' ? '-loka' : '';
+  INVOCATION_SUB = world.id === 'moksha' ? 'The soul begins its ascent to Mokṣa' : (world.subtitle || 'The journey begins');
   audio.setProfile(world.sound || world.id);
+  { const tg = document.querySelector('#startScreen .tag'); if (tg && world.subtitle) tg.textContent = world.subtitle; }
   const IMG = `${CINE_ASSETS}/img`;
   const cine = gameForWorld(world);
   const cinePlayers = cine.players.map((pl) => {
@@ -208,13 +220,17 @@ async function main() {
   steps.forEach((s) => worldLayer.addChild(s.container));
 
   // ---- pilgrim ----
-  const pilgrim = new PIXI.Sprite(tex[`${IMG}/token.png`]);
-  pilgrim.anchor.set(0.5, 0.92);
-  const baseScale = (ROW_H * 0.92) / pilgrim.texture.height;
-  pilgrim.scale.set(baseScale);
-  pilgrim.blendMode = PIXI.BLEND_MODES.ADD; // backlit puppet glows instead of a black box
-  pilgrim.tint = cinePlayers[cineCur].color; // adopt the current player's colour
-  worldLayer.addChild(pilgrim);
+  const pilgrims = cinePlayers.map((pl) => {
+    const s = new PIXI.Sprite(tex[`${IMG}/token.png`]);
+    s.anchor.set(0.5, 0.92);
+    s.blendMode = PIXI.BLEND_MODES.ADD; // backlit puppet glows instead of a black box
+    s.tint = pl.color; // each player keeps their colour
+    worldLayer.addChild(s);
+    return s;
+  });
+  const baseScale = (ROW_H * 0.92) / pilgrims[0].texture.height;
+  pilgrims.forEach((s) => s.scale.set(baseScale));
+  let pilgrim = pilgrims[cineCur]; // the active pilgrim (walks); camera follows this
 
   // ---- dice ----
   // ---- dice (fixed to the side, screen-space) ----
@@ -234,7 +250,7 @@ async function main() {
   let curCamY = null;
   let sway = 0;
 
-  placePilgrim(1);
+  placeAllPilgrims();
   steps[0].light();
   temple.tint = currentRealm.temple;
   renderJournal();
@@ -385,8 +401,10 @@ async function main() {
     if (nr !== currentRealm) await curtainWipe(nr);
 
     cinePlayers[cineCur].pos = pos;
+    placeAllPilgrims();
 
     if (res.won || pos >= 100) {
+      audio.fanfare();
       const p = cinePlayers[cineCur];
       setRealmTitle(cineMulti
         ? { name: p.name, en: '', theme: 'reaches the summit first' }
@@ -401,8 +419,8 @@ async function main() {
     if (cineMulti) {
       cineCur = (cineCur + 1) % cinePlayers.length;
       pos = cinePlayers[cineCur].pos;
-      placePilgrim(pos);
-      pilgrim.tint = cinePlayers[cineCur].color;
+      pilgrim = pilgrims[cineCur];
+      placeAllPilgrims();
       const r2 = realmOf(pos);
       if (r2 !== currentRealm) setRealm(r2);
       curCamY = null; // snap the camera to the next player
@@ -432,8 +450,8 @@ async function main() {
     steps[0].light();
     setRealm(REALMS[0]);
     audio.setRealm(0);
-    placePilgrim(1);
-    pilgrim.tint = cinePlayers[0].color;
+    pilgrim = pilgrims[0];
+    placeAllPilgrims();
     curCamY = null;
     hideRealmTitle();
     $('#restartBtn').style.display = 'none';
@@ -443,6 +461,18 @@ async function main() {
   }
 
   // ---- movement ----
+  function placeAllPilgrims() {
+    const byStep = {};
+    cinePlayers.forEach((p) => { (byStep[p.pos] = byStep[p.pos] || []).push(p); });
+    cinePlayers.forEach((p, i) => {
+      const mates = byStep[p.pos];
+      const c = stepPos(p.pos);
+      const ox = mates.length > 1 ? (mates.indexOf(p) - (mates.length - 1) / 2) * 26 : 0;
+      pilgrims[i].x = c.x + ox;
+      pilgrims[i].y = c.y;
+      pilgrims[i].alpha = (cineMulti && i !== cineCur) ? 0.5 : 1; // dim the players who are waiting
+    });
+  }
   function placePilgrim(n) {
     const p = stepPos(n);
     pilgrim.x = p.x;

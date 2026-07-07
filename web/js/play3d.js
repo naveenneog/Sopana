@@ -8,6 +8,13 @@ import { getSnakeStyle } from './snakes.js';
 import { gameForWorld, charOf } from './config.js';
 
 const hexInt = (h) => parseInt(String(h || '#000').replace('#', ''), 16) || 0;
+const clampDark = (h) => {
+  const r = (h >> 16) & 255, g = (h >> 8) & 255, b = h & 255;
+  const lum = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+  if (lum <= 0.35) return h; // already dark enough
+  const k = 0.14; // pull a light theme background toward black but keep a hint of its hue
+  return (Math.round(r * k) << 16) | (Math.round(g * k) << 8) | Math.round(b * k);
+};
 
 const $ = (s) => document.querySelector(s);
 const TILE = 1;
@@ -82,8 +89,9 @@ async function main() {
   $('#stage').appendChild(renderer.domElement);
 
   const scene = new THREE.Scene();
-  scene.background = new THREE.Color(C.bg);
-  scene.fog = new THREE.Fog(C.bg, 20, 44);
+  const bgDark = clampDark(C.bg);
+  scene.background = new THREE.Color(bgDark);
+  scene.fog = new THREE.Fog(bgDark, 20, 44);
 
   const camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 200);
 
@@ -125,10 +133,15 @@ async function main() {
 
   // Snakes & ladders are NOT drawn upfront (declutter) — each appears on landing.
 
-  // ---- token (pawn) ----
-  const token = makePawn(players[current].color);
-  token.position.copy(tilePos(players[current].pos));
-  board.add(token);
+  // ---- pawns: one character standee per player (all positions stay visible) ----
+  const pawns = players.map((p) => { const g = makeStandee(p); board.add(g); return g; });
+  const turnRing = new THREE.Mesh(
+    new THREE.TorusGeometry(0.4, 0.045, 10, 36),
+    new THREE.MeshBasicMaterial({ color: players[current].color, transparent: true, opacity: 0.7 }),
+  );
+  turnRing.rotation.x = Math.PI / 2; turnRing.position.y = 0.02; board.add(turnRing);
+  let token = pawns[current]; // the pawn the current roll animates
+  placePawns();
 
   // ---- die ----
   const die = makeDie();
@@ -203,7 +216,14 @@ async function main() {
   // ---- render loop ----
   renderer.setAnimationLoop(() => {
     updateCamera();
-    token.rotation.y += 0.01;
+    const t = performance.now() * 0.001;
+    for (const pw of pawns) pw.userData.plane.quaternion.copy(camera.quaternion); // billboard the glyph
+    if (token) {
+      token.userData.plane.position.y = 0.86 + Math.sin(t * 3) * 0.03; // idle bob on the active pawn
+      turnRing.position.x = token.position.x;
+      turnRing.position.z = token.position.z;
+    }
+    turnRing.material.opacity = 0.42 + Math.sin(t * 4) * 0.22;
     renderer.render(scene, camera);
   });
 
@@ -247,7 +267,9 @@ async function main() {
     }
 
     players[current].pos = pos;
+    placePawns();
     if (pos >= 100) {
+      audio.fanfare();
       $('#status').textContent = multi ? `🏆 ${players[current].glyph} ${players[current].name} wins!` : '॥ Moksha — you have won ॥';
       if ($('#restart')) $('#restart').style.display = 'inline-block';
       busy = false;
@@ -256,8 +278,9 @@ async function main() {
     if (multi) {
       current = (current + 1) % players.length;
       pos = players[current].pos;
-      token.position.copy(tilePos(pos)); token.position.y = 0;
-      tintPawn(players[current].color);
+      token = pawns[current];
+      placePawns();
+      highlightRing();
       updateTurn();
     } else {
       $('#status').textContent = `On step ${pos}`;
@@ -266,10 +289,18 @@ async function main() {
     $('#roll').disabled = false;
   }
 
-  function tintPawn(c) {
-    const m = token.userData && token.userData.mat;
-    if (m) { m.color.setHex(c); m.emissive.setHex(c); m.emissiveIntensity = 0.22; }
+  function placePawns() {
+    const byTile = {};
+    players.forEach((p) => { (byTile[p.pos] = byTile[p.pos] || []).push(p); });
+    players.forEach((p, i) => {
+      const mates = byTile[p.pos];
+      const c = tilePos(p.pos);
+      let ox = 0, oz = 0;
+      if (mates.length > 1) { const k = mates.indexOf(p); const a = (k / mates.length) * Math.PI * 2; ox = Math.cos(a) * 0.24; oz = Math.sin(a) * 0.24; }
+      pawns[i].position.set(c.x + ox, c.y, c.z + oz);
+    });
   }
+  function highlightRing() { if (turnRing) turnRing.material.color.setHex(players[current].color); }
   function updateTurn() {
     const P = players[current];
     const badge = $('#p3dturn');
@@ -351,8 +382,9 @@ async function main() {
     players.forEach((p) => (p.pos = 1));
     current = 0;
     pos = 1;
-    token.position.copy(tilePos(1)); token.position.y = 0;
-    tintPawn(players[0].color);
+    token = pawns[0];
+    placePawns();
+    highlightRing();
     $('#restart').style.display = 'none';
     $('#roll').disabled = false;
     updateTurn();
@@ -547,13 +579,30 @@ function makeSnake(a, b) {
   return { group: g, curve };
 }
 
-function makePawn(colorInt) {
+function glyphTexture(glyph, hex) {
+  const c = document.createElement('canvas'); c.width = c.height = 160;
+  const x = c.getContext('2d');
+  x.clearRect(0, 0, 160, 160);
+  x.beginPath(); x.arc(80, 80, 72, 0, Math.PI * 2);
+  x.fillStyle = 'rgba(10,6,3,0.74)'; x.fill();
+  x.lineWidth = 9; x.strokeStyle = hex; x.stroke();
+  x.font = '92px system-ui, "Segoe UI Emoji", "Noto Color Emoji", "Apple Color Emoji", sans-serif';
+  x.textAlign = 'center'; x.textBaseline = 'middle';
+  x.fillText(glyph, 80, 90);
+  const t = new THREE.CanvasTexture(c); t.anisotropy = 4;
+  return t;
+}
+function makeStandee(player) {
   const g = new THREE.Group();
-  const mat = new THREE.MeshStandardMaterial({ color: colorInt || 0xffcf7a, roughness: 0.35, metalness: 0.4, emissive: colorInt || 0x5a3e0c, emissiveIntensity: 0.22 });
-  const base = new THREE.Mesh(new THREE.CylinderGeometry(0.28, 0.34, 0.2, 20), mat); base.position.y = 0.1; g.add(base);
-  const body = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.24, 0.5, 20), mat); body.position.y = 0.46; g.add(body);
-  const head = new THREE.Mesh(new THREE.SphereGeometry(0.2, 18, 18), mat); head.position.y = 0.82; g.add(head);
-  g.userData.mat = mat;
+  const mat = new THREE.MeshStandardMaterial({ color: player.color, roughness: 0.4, metalness: 0.35, emissive: player.color, emissiveIntensity: 0.28 });
+  const base = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.36, 0.14, 28), mat); base.position.y = 0.07; g.add(base);
+  const stem = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.06, 0.36, 14), mat); stem.position.y = 0.32; g.add(stem);
+  const plane = new THREE.Mesh(
+    new THREE.PlaneGeometry(0.74, 0.74),
+    new THREE.MeshBasicMaterial({ map: glyphTexture(player.glyph, player.colorHex), transparent: true, depthWrite: false }),
+  );
+  plane.position.y = 0.86; g.add(plane);
+  g.userData = { mat, plane };
   return g;
 }
 

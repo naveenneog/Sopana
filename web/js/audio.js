@@ -10,7 +10,7 @@ const PROFILES = {
     drone: 'sawtooth', droneVoices: (sa) => [sa, sa * 1.002, sa * 2 ** (7 / 12), sa * 2],
     pluck: { a: 'triangle', b: 'sine', ratio: 2, bGain: 0.3 },
     pad: 'triangle', filterBase: 400, filterStep: 520, reverb: { dur: 1.8, decay: 2.4, wet: 0.5 },
-    serpent: 'hiss', dice: 'wood',
+    serpent: 'hiss', dice: 'wood', motif: [0, 2, 4, 5, 7],
   },
   // Founder's Climb — a bright synth score; square/saw plucks, tight cleaner reverb, glitch SFX.
   founders: {
@@ -18,7 +18,7 @@ const PROFILES = {
     drone: 'sawtooth', droneVoices: (sa) => [sa, sa * 1.004, sa * 2 ** (7 / 12) * 1.001, sa * 2 ** (4 / 12)],
     pluck: { a: 'square', b: 'sawtooth', ratio: 1, bGain: 0.18 },
     pad: 'sawtooth', filterBase: 700, filterStep: 700, reverb: { dur: 0.9, decay: 1.6, wet: 0.28 },
-    serpent: 'glitch', dice: 'blip',
+    serpent: 'glitch', dice: 'blip', motif: [0, 4, 7, 9, 11],
   },
   // Panchatantra Trail — a warm folk pentatonic; soft tanpura drone, plucky sitar, woody reverb.
   panchatantra: {
@@ -26,7 +26,7 @@ const PROFILES = {
     drone: 'triangle', droneVoices: (sa) => [sa, sa * 1.001, sa * 2 ** (7 / 12), sa * 2],
     pluck: { a: 'triangle', b: 'triangle', ratio: 2, bGain: 0.22 },
     pad: 'triangle', filterBase: 450, filterStep: 420, reverb: { dur: 1.4, decay: 2.0, wet: 0.4 },
-    serpent: 'boing', dice: 'wood',
+    serpent: 'boing', dice: 'wood', motif: [0, 2, 4, 2, 4, 7],
   },
   // Habit Heroes — a playful chiptune major; light square pad, bleepy plucks, comic buzzer SFX.
   habits: {
@@ -34,7 +34,7 @@ const PROFILES = {
     drone: 'square', droneVoices: (sa) => [sa * 2, sa * 2 * 2 ** (4 / 12)],
     pluck: { a: 'square', b: 'square', ratio: 2, bGain: 0.15 },
     pad: 'square', filterBase: 900, filterStep: 500, reverb: { dur: 0.5, decay: 1.2, wet: 0.18 },
-    serpent: 'buzzer', dice: 'blip',
+    serpent: 'buzzer', dice: 'blip', motif: [0, 2, 4, 7, 4, 7],
   },
 };
 
@@ -179,6 +179,15 @@ class AudioEngine {
     for (let i = 0; i < 8; i++) this._pluck(this._freq(i), i * 0.05, 0.4, 0.16);
   }
 
+  // a short per-theme melodic phrase, played on a win
+  fanfare() {
+    if (!this.ctx) return;
+    const m = this.p.motif || [0, 2, 4, 7];
+    m.forEach((d, i) => this._pluck(this._freq(d), i * 0.16, 0.55, 0.22));
+    const top = m[m.length - 1] || 7;
+    [0, 2, 4].forEach((d) => this._pluck(this._freq(top + d), m.length * 0.16, 1.3, 0.15));
+  }
+
   diceRattle() {
     if (!this.ctx) return;
     if (this.p.dice === 'blip') { for (let i = 0; i < 5; i++) this._pluck(this._freq(3 + i) * 2, i * 0.07, 0.08, 0.12); return; }
@@ -260,8 +269,7 @@ class AudioEngine {
     src.connect(ng).connect(this.master); src.start(t); src.stop(t + 0.2);
   }
 
-  realmSwell() {
-    if (!this.ctx) return;
+  realmSwell() {    if (!this.ctx) return;
     const ctx = this.ctx, t = ctx.currentTime;
     const o = ctx.createOscillator(); o.type = this.p.drone === 'square' ? 'square' : 'sawtooth'; o.frequency.value = this.p.base / 2;
     const f = ctx.createBiquadFilter(); f.type = 'lowpass'; f.frequency.setValueAtTime(200, t); f.frequency.linearRampToValueAtTime(3000, t + 1.2);

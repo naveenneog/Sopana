@@ -22,10 +22,16 @@ function defaultPlayer(i) {
 function ensurePlayers() {
   while (state.players.length < state.count) state.players.push(defaultPlayer(state.players.length));
   state.players.length = state.count;
-  // re-validate characters against the current theme's roster
+  // re-validate characters against the theme roster, and keep default picks distinct
   const roster = (worlds[state.world] && worlds[state.world].characters) || [];
+  const used = new Set();
   state.players.forEach((p, i) => {
-    if (!roster.some((c) => c.id === p.char)) p.char = roster.length ? roster[i % roster.length].id : null;
+    const valid = roster.some((c) => c.id === p.char);
+    if (!valid || (used.has(p.char) && used.size < roster.length)) {
+      const free = roster.find((c) => !used.has(c.id));
+      p.char = free ? free.id : (roster.length ? roster[i % roster.length].id : null);
+    }
+    used.add(p.char);
   });
 }
 
@@ -34,6 +40,7 @@ function renderThemes() {
   for (const id of WORLD_IDS) {
     const w = worlds[id];
     const c = el('button', 'card' + (id === state.world ? ' sel' : ''));
+    c.setAttribute('aria-pressed', String(id === state.world));
     c.style.setProperty('--accent', (w.theme && w.theme.accent) || '#e8a33d');
     c.innerHTML = `<div class="t">${w.title}</div><div class="s">${w.subtitle || ''}</div><div class="swatch"></div>`;
     c.addEventListener('click', () => { state.world = id; ensurePlayers(); renderThemes(); renderPlayers(); });
@@ -45,6 +52,7 @@ function renderModes() {
   const box = $('#modes'); box.innerHTML = '';
   for (const [id, label] of MODES) {
     const b = el('button', 'pill' + (id === state.mode ? ' sel' : ''), label);
+    b.setAttribute('aria-pressed', String(id === state.mode));
     b.addEventListener('click', () => { state.mode = id; renderModes(); });
     box.appendChild(b);
   }
@@ -54,6 +62,7 @@ function renderCounts() {
   const box = $('#counts'); box.innerHTML = '';
   for (let n = 1; n <= 4; n++) {
     const b = el('button', 'pill' + (n === state.count ? ' sel' : ''), `${n} ${n === 1 ? 'player' : 'players'}`);
+    b.setAttribute('aria-pressed', String(n === state.count));
     b.addEventListener('click', () => { state.count = n; ensurePlayers(); renderCounts(); renderPlayers(); });
     box.appendChild(b);
   }
@@ -71,6 +80,8 @@ function renderPlayers() {
     const chars = el('div', 'chars');
     for (const c of roster) {
       const chip = el('button', 'chip' + (c.id === p.char ? ' sel' : ''), `${c.glyph}<span class="cn">${c.name}</span>`);
+      chip.setAttribute('aria-pressed', String(c.id === p.char));
+      chip.setAttribute('aria-label', c.name);
       chip.style.setProperty('--pc', p.color);
       chip.title = c.name;
       chip.addEventListener('click', () => { p.char = c.id; renderPlayers(); });
