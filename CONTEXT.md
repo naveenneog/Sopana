@@ -7,7 +7,7 @@
 
 - **Live:** https://naveenneog.github.io/Sopana/
 - **Repo:** https://github.com/naveenneog/Sopana (public, PolyForm Noncommercial 1.0.0)
-- **Latest release:** **v1.5.0** (releases v1.0.0 → v1.5.0; a GitHub Release rebuilds the APK)
+- **Latest release:** **v1.6.0** (releases v1.0.0 → v1.6.0; a GitHub Release rebuilds the APK)
 - **Owner:** @naveenneog (Naveen Gopalakrishna)
 
 ---
@@ -46,7 +46,7 @@ Full file map + gotchas: the `sopana-game` skill's `references/architecture.md`.
 
 ---
 
-## Themes + characters + asset inventory (as of v1.5.0)
+## Themes + characters + asset inventory (as of v1.6.0)
 Four worlds. Each square's snake/ladder has `{from,to,name,en,meaning}`; each theme has a
 character roster and a full media set.
 
@@ -138,6 +138,13 @@ the emulator, not a bug.
   distinct default characters).
 - **v1.5.0** — **Per-character cinematic sprites** (17, backlit, one per character) + **per-theme
   generated music beds** replacing the drone (moksha keeps its drone).
+- **v1.6.0** — **Mobile-friendliness pass** (tested on-device, UX-designer lens): board is the
+  hero on phones (compact ellipsised header, hidden subtitle, `board-wrap = min(96vw,62vh)`),
+  all touch targets ≥44px (`.ctrl`/`.ctrl select`/`.pill`/`nav a`/HUD buttons), safe-area insets
+  (`viewport-fit=cover` + `env(safe-area-inset-*)`), `touch-action: manipulation` + no tap
+  highlight, HUD scrims, and Cinematic/3D `#title`/`#status` moved clear of the fixed nav
+  (media queries at END of each `<style>`). New harness `tooling/qa_mobile.mjs` (5 phone
+  viewports). Addresses SOP-10 (board-small on mobile).
 
 ---
 

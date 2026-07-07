@@ -2,15 +2,18 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <title>Sopāna — New Game</title>
     <style>
       :root { --gold: #e8a33d; --ink: #f4e6cd; }
       * { box-sizing: border-box; }
-      html, body { margin: 0; min-height: 100%; }
+      html, body { margin: 0; min-height: 100%; -webkit-text-size-adjust: 100%; }
+      * { -webkit-tap-highlight-color: transparent; }
+      button, select, .pill, .card, .chip { touch-action: manipulation; }
       body {
         background: radial-gradient(120% 90% at 50% 15%, rgba(232, 163, 61, 0.12), transparent 55%), #0a0603;
-        color: var(--ink); font-family: 'Georgia', 'Noto Serif', serif; padding: 2rem 1rem 3rem;
+        color: var(--ink); font-family: 'Georgia', 'Noto Serif', serif;
+        padding: calc(1.4rem + env(safe-area-inset-top, 0px)) 1rem calc(2rem + env(safe-area-inset-bottom, 0px));
       }
       .wrap { max-width: 900px; margin: 0 auto; }
       header { text-align: center; margin-bottom: 1.6rem; }
@@ -26,7 +29,7 @@
       .card .s { font-size: 0.82rem; color: #c7ac82; font-style: italic; margin-top: 0.2rem; }
       .swatch { width: 100%; height: 6px; border-radius: 4px; margin-top: 0.7rem; background: var(--accent, var(--gold)); opacity: 0.85; }
       .row { display: flex; flex-wrap: wrap; gap: 0.5rem; }
-      .pill { cursor: pointer; font: inherit; color: var(--ink); background: rgba(255, 255, 255, 0.05); border: 1.5px solid rgba(232, 163, 61, 0.3); border-radius: 999px; padding: 0.55rem 1.1rem; transition: all 0.15s; }
+      .pill { cursor: pointer; font: inherit; color: var(--ink); background: rgba(255, 255, 255, 0.05); border: 1.5px solid rgba(232, 163, 61, 0.3); border-radius: 999px; padding: 0.6rem 1.1rem; min-height: 44px; display: inline-flex; align-items: center; transition: all 0.15s; }
       .pill.sel { background: var(--gold); color: #241200; border-color: var(--gold); font-weight: bold; }
       .players { display: grid; gap: 0.7rem; }
       .prow { display: flex; align-items: center; gap: 0.7rem; flex-wrap: wrap; border: 1px solid rgba(232, 163, 61, 0.22); border-radius: 12px; padding: 0.7rem 0.8rem; background: rgba(255, 255, 255, 0.02); }
