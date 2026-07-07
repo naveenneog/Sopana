@@ -1,0 +1,14 @@
+{
+  "name": "Sopāna — Snakes & Ladders",
+  "short_name": "Sopāna",
+  "description": "A themed Snakes & Ladders rooted in the ancient Indian Moksha Patam — each snake and ladder carries its meaning.",
+  "start_url": "setup.html",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0a0603",
+  "theme_color": "#0a0603",
+  "icons": [
+    { "src": "assets/brand/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "assets/brand/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}

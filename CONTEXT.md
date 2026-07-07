@@ -7,7 +7,7 @@
 
 - **Live:** https://naveenneog.github.io/Sopana/
 - **Repo:** https://github.com/naveenneog/Sopana (public, PolyForm Noncommercial 1.0.0)
-- **Latest release:** **v1.6.0** (releases v1.0.0 → v1.6.0; a GitHub Release rebuilds the APK)
+- **Latest release:** **v1.7.0** (releases v1.0.0 → v1.7.0; a GitHub Release rebuilds the APK)
 - **Owner:** @naveenneog (Naveen Gopalakrishna)
 
 ---
@@ -145,6 +145,15 @@ the emulator, not a bug.
   highlight, HUD scrims, and Cinematic/3D `#title`/`#status` moved clear of the fixed nav
   (media queries at END of each `<style>`). New harness `tooling/qa_mobile.mjs` (5 phone
   viewports). Addresses SOP-10 (board-small on mobile).
+- **v1.7.0** — **Brand identity / new logo**: a gpt-image-2 "monogram-S" mark — a golden serpent
+  forming an **S** with ladder rungs (Sopāna = "ladder of ascent") on near-black. Master at
+  `web/assets/brand/logo.png`. `tooling/gen_logo.py` generated 5 concepts; `tooling/make_brand_assets.py`
+  derives every size deterministically (luma-keys the mark off its near-black bg, then recomposes):
+  web favicon + apple-touch + PWA `icon-192/512` + transparent `logo-mark.png`, and the Capacitor
+  `assets/` source (`icon-only`, `icon-foreground`, `icon-background`, `splash`, `splash-dark`).
+  `manifest.webmanifest` added + head links on all pages; lobby leads with the emblem, board topbar
+  shows the mark (replaces the `॥`). `apk.yml` now runs `@capacitor/assets generate --android` after
+  `cap add` so the APK icon + splash are the new logo (was the default Capacitor icon).
 
 ---
 

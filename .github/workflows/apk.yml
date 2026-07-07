@@ -36,6 +36,11 @@ jobs:
       - name: Add Android platform
         run: npx cap add android
 
+      - name: Generate app icon + splash from assets/
+        run: |
+          npm install --no-save @capacitor/assets@3
+          npx @capacitor/assets generate --android --iconBackgroundColor '#0a0603' --iconBackgroundColorDark '#0a0603' --splashBackgroundColor '#0a0603' --splashBackgroundColorDark '#0a0603'
+
       - name: Sync web assets into the Android project
         run: npx cap sync android
 

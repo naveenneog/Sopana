@@ -48,6 +48,7 @@ button, select, a, .ctrl, .pill { touch-action: manipulation; }
   color: var(--accent);
   text-shadow: 0 0 18px rgba(232, 163, 61, 0.6);
 }
+.brand-logo { height: 42px; width: 42px; display: block; filter: drop-shadow(0 0 14px rgba(232, 163, 61, 0.6)); }
 .topbar h1 { margin: 0; font-size: 1.5rem; letter-spacing: 0.06em; }
 .subtitle { margin: 0; font-size: 0.8rem; color: var(--muted); font-style: italic; }
 .controls { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
@@ -284,6 +285,7 @@ button, select, a, .ctrl, .pill { touch-action: manipulation; }
 @media (max-width: 720px) {
   .topbar { padding: calc(0.5rem + env(safe-area-inset-top, 0px)) 0.8rem 0.5rem; gap: 0.4rem 0.5rem; }
   .brand-mark { font-size: 1.4rem; }
+  .brand-logo { height: 32px; width: 32px; }
   .topbar h1 { font-size: 1.05rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 58vw; }
   .subtitle { display: none; }
   .controls { gap: 0.4rem; }

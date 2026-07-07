@@ -4,6 +4,10 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <title>Sopāna — New Game</title>
+    <link rel="icon" href="favicon.png" type="image/png" />
+    <link rel="apple-touch-icon" href="apple-touch-icon.png" />
+    <link rel="manifest" href="manifest.webmanifest" />
+    <meta name="theme-color" content="#0a0603" />
     <style>
       :root { --gold: #e8a33d; --ink: #f4e6cd; }
       * { box-sizing: border-box; }
@@ -18,6 +22,8 @@
       .wrap { max-width: 900px; margin: 0 auto; }
       header { text-align: center; margin-bottom: 1.6rem; }
       .brand { font-size: 3rem; letter-spacing: 0.16em; color: #ffd98a; text-shadow: 0 0 34px rgba(232, 163, 61, 0.6); }
+      .emblem { width: 112px; height: 112px; display: block; margin: 0 auto 0.5rem; filter: drop-shadow(0 0 26px rgba(232, 163, 61, 0.55)); animation: emblem-in 0.8s ease-out both; }
+      @keyframes emblem-in { from { opacity: 0; transform: translateY(-8px) scale(0.92); } to { opacity: 1; transform: none; } }
       .tag { color: #e8cfa0; font-style: italic; margin-top: 0.3rem; }
       h2 { font-size: 0.95rem; letter-spacing: 0.18em; text-transform: uppercase; color: var(--gold); border-bottom: 1px solid rgba(232, 163, 61, 0.25); padding-bottom: 0.4rem; margin: 1.8rem 0 0.9rem; }
       .grid { display: grid; gap: 0.7rem; }
@@ -50,6 +56,7 @@
   <body>
     <div class="wrap">
       <header>
+        <img class="emblem" src="assets/brand/logo-mark.png" alt="" aria-hidden="true" />
         <div class="brand">॥ Sopāna ॥</div>
         <div class="tag">Choose your path, your players, and your form.</div>
       </header>
