@@ -63,6 +63,7 @@ async function main() {
   const idx = indexWorld(world);
   const snakeStyle = getSnakeStyle(world);
   AUDIO_BASE = world.assets || 'assets/moksha';
+  if (world.id !== 'moksha') audio.setBed(`${AUDIO_BASE}/music.mp3`); // themed music bed replaces the drone
   document.title = `${world.title} — 3D`;
   { const tEl = document.querySelector('#title'); if (tEl) tEl.textContent = world.title; }
 

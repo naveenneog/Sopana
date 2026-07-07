@@ -45,12 +45,20 @@ class AudioEngine {
     this.started = false;
     this._padStarted = false;
     this.p = PROFILES.moksha;
+    this.bedUrl = null;
+    this.hasBed = false;
+    this.bedEl = null;
   }
 
-  // Choose the theme's sound design. Must be called before resume() (before the
-  // context is built); theme switches reload the page so the context is fresh.
+  // choose the theme's sound design (before resume)
   setProfile(id) {
     if (!this.started) this.p = PROFILES[id] || PROFILES.moksha;
+  }
+
+  // a looping generated music track for this theme; when set, the constant
+  // procedural drone/pad is suppressed (event SFX still play). Call before resume().
+  setBed(url) {
+    if (!this.started) { this.bedUrl = url || null; this.hasBed = !!url; }
   }
 
   resume() {
@@ -59,7 +67,25 @@ class AudioEngine {
       if (!this.ctx) this._build();
       if (this.ctx.state === 'suspended') this.ctx.resume();
       if (!this.started) { this._startDrone(); this.setRealm(0); this.started = true; }
+      this._startBed();
     } catch { /* no audio available */ }
+  }
+
+  _startBed() {
+    if (!this.bedUrl || this.bedEl || !this.ctx) return;
+    try {
+      const el = new Audio(this.bedUrl);
+      el.loop = true;
+      el.preload = 'auto';
+      this.bedEl = el;
+      const src = this.ctx.createMediaElementSource(el);
+      const g = this.ctx.createGain();
+      g.gain.value = 0.42; // sit under the narration/SFX
+      src.connect(g).connect(this.master);
+      this.bedGain = g;
+      const p = el.play();
+      if (p && p.catch) p.catch(() => {});
+    } catch { /* media element source unavailable */ }
   }
 
   _build() {
@@ -113,6 +139,7 @@ class AudioEngine {
   }
 
   _startDrone() {
+    if (this.hasBed) return; // the generated music bed replaces the constant drone
     const ctx = this.ctx, t = ctx.currentTime;
     const sa = this.p.base / 2;
     const gain = this.p.drone === 'square' ? 0.05 : 0.11; // squares are loud
@@ -135,7 +162,7 @@ class AudioEngine {
     const t = this.ctx.currentTime;
     this.droneFilter.frequency.linearRampToValueAtTime(this.p.filterBase + i * this.p.filterStep, t + 1.5);
     this.padGain.gain.linearRampToValueAtTime(Math.min(0.24, i * 0.06), t + 1.5);
-    if (!this._padStarted) {
+    if (!this._padStarted && !this.hasBed) {
       const b = this.p.base;
       for (const f of [b, b * 2 ** (4 / 12), b * 2 ** (7 / 12)]) {
         const o = this.ctx.createOscillator();

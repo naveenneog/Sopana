@@ -152,16 +152,24 @@ async function main() {
   REALM_SUFFIX = world.id === 'moksha' ? '-loka' : '';
   INVOCATION_SUB = world.id === 'moksha' ? 'The soul begins its ascent to Mokṣa' : (world.subtitle || 'The journey begins');
   audio.setProfile(world.sound || world.id);
+  if (world.id !== 'moksha') audio.setBed(`${CINE_ASSETS}/music.mp3`); // themed music bed replaces the drone
   { const tg = document.querySelector('#startScreen .tag'); if (tg && world.subtitle) tg.textContent = world.subtitle; }
   const IMG = `${CINE_ASSETS}/img`;
   const cine = gameForWorld(world);
   const cinePlayers = cine.players.map((pl) => {
     const ch = charOf(world, pl.char);
-    return { name: pl.name, colorHex: pl.color, color: hexToInt(pl.color), glyph: (ch && ch.glyph) || '●', pos: 1 };
+    return { name: pl.name, char: pl.char, colorHex: pl.color, color: hexToInt(pl.color), glyph: (ch && ch.glyph) || '●', pos: 1 };
   });
   let cineCur = 0;
   const cineMulti = cinePlayers.length > 1;
   const tex = await PIXI.Assets.load([`${IMG}/token.png`, `${IMG}/board.png`]);
+  // per-character cinematic sprites — each player is their chosen character (fallback to the world token)
+  const charTex = {};
+  await Promise.all([...new Set(cinePlayers.map((p) => p.char).filter(Boolean))].map(async (cid) => {
+    try { charTex[cid] = await PIXI.Assets.load(`${IMG}/char-${cid}.png`); }
+    catch (e) { console.warn('char sprite load failed', cid, e && e.message); charTex[cid] = tex[`${IMG}/token.png`]; }
+  }));
+  const glowTex = makeGlowTex();
 
   // ---- layers ----
   const skyBox = new PIXI.Container();
@@ -219,17 +227,26 @@ async function main() {
   for (let n = 1; n <= 100; n++) steps.push(makeStep(n));
   steps.forEach((s) => worldLayer.addChild(s.container));
 
-  // ---- pilgrim ----
+  // ---- pilgrims (one per player, each rendered as its chosen character) ----
+  const glows = cinePlayers.map((pl) => {
+    const g = new PIXI.Sprite(glowTex);
+    g.anchor.set(0.5, 0.6);
+    g.tint = pl.color;
+    g.blendMode = PIXI.BLEND_MODES.ADD;
+    g.alpha = 0.5;
+    worldLayer.addChild(g);
+    return g;
+  });
   const pilgrims = cinePlayers.map((pl) => {
-    const s = new PIXI.Sprite(tex[`${IMG}/token.png`]);
+    const s = new PIXI.Sprite(charTex[pl.char] || tex[`${IMG}/token.png`]);
     s.anchor.set(0.5, 0.92);
-    s.blendMode = PIXI.BLEND_MODES.ADD; // backlit puppet glows instead of a black box
-    s.tint = pl.color; // each player keeps their colour
+    s.blendMode = PIXI.BLEND_MODES.ADD; // backlit figure glows on the dark stage
     worldLayer.addChild(s);
     return s;
   });
   const baseScale = (ROW_H * 0.92) / pilgrims[0].texture.height;
   pilgrims.forEach((s) => s.scale.set(baseScale));
+  glows.forEach((g) => g.scale.set(baseScale * 2.6));
   let pilgrim = pilgrims[cineCur]; // the active pilgrim (walks); camera follows this
 
   // ---- dice ----
@@ -261,6 +278,7 @@ async function main() {
     const s = Math.min(app.screen.width / WORLD_W, app.screen.height / (ROW_H * 3.6), 0.9);
     worldLayer.scale.set(s);
     sway += 0.012 * delta;
+    if (glows[cineCur]) { glows[cineCur].x = pilgrim.x; glows[cineCur].y = pilgrim.y - ROW_H * 0.4; }
 
     const target = app.screen.height * 0.62 - pilgrim.y * s;
     if (curCamY === null) curCamY = target;
@@ -470,7 +488,10 @@ async function main() {
       const ox = mates.length > 1 ? (mates.indexOf(p) - (mates.length - 1) / 2) * 26 : 0;
       pilgrims[i].x = c.x + ox;
       pilgrims[i].y = c.y;
-      pilgrims[i].alpha = (cineMulti && i !== cineCur) ? 0.5 : 1; // dim the players who are waiting
+      pilgrims[i].alpha = (cineMulti && i !== cineCur) ? 0.55 : 1; // dim the players who are waiting
+      glows[i].x = c.x + ox;
+      glows[i].y = c.y - ROW_H * 0.4;
+      glows[i].alpha = (cineMulti && i !== cineCur) ? 0.26 : 0.5;
     });
   }
   function placePilgrim(n) {
@@ -846,6 +867,16 @@ async function main() {
     }
   }
 
+  function makeGlowTex() {
+    const c = document.createElement('canvas'); c.width = c.height = 128;
+    const g = c.getContext('2d');
+    const grd = g.createRadialGradient(64, 64, 3, 64, 64, 64);
+    grd.addColorStop(0, 'rgba(255,255,255,0.85)');
+    grd.addColorStop(0.4, 'rgba(255,255,255,0.3)');
+    grd.addColorStop(1, 'rgba(255,255,255,0)');
+    g.fillStyle = grd; g.fillRect(0, 0, 128, 128);
+    return PIXI.Texture.from(c);
+  }
   function makeSky(realm) {
     const c = document.createElement('canvas');
     c.width = 16; c.height = 256;
