@@ -7,7 +7,7 @@
 
 - **Live:** https://naveenneog.github.io/Sopana/
 - **Repo:** https://github.com/naveenneog/Sopana (public, PolyForm Noncommercial 1.0.0)
-- **Latest release:** **v1.7.0** (releases v1.0.0 → v1.7.0; a GitHub Release rebuilds the APK)
+- **Latest release:** **v1.8.0** (releases v1.0.0 → v1.8.0; a GitHub Release rebuilds the APK)
 - **Owner:** @naveenneog (Naveen Gopalakrishna)
 
 ---
@@ -154,6 +154,15 @@ the emulator, not a bug.
   `manifest.webmanifest` added + head links on all pages; lobby leads with the emblem, board topbar
   shows the mark (replaces the `॥`). `apk.yml` now runs `@capacitor/assets generate --android` after
   `cap add` so the APK icon + splash are the new logo (was the default Capacitor icon).
+- **v1.8.0** — **3D performance + full-view fix**: the 3D board was laggy and cut off on phones.
+  Collapsed ~220 draw calls → **14**: 100 tile meshes → one `InstancedMesh` (per-instance colour),
+  100 number sprites → one baked atlas texture on a single plane, ~19 markers → one `InstancedMesh`;
+  dropped the dynamic `PointLight`; clamped `devicePixelRatio` to 1.5 + no MSAA on mobile. **Fit-to-
+  viewport camera** (`fitRadius`, aspect-aware, fov 55) so the whole board shows on portrait (was a
+  vertical-fov crop), a more top-down default on phones (`presetPhi`) so the square board fills the
+  screen, widened fog, and **pinch-to-zoom** (1-finger orbit / 2-finger pinch). `window.__sl3d.rendererInfo()`
+  now returns `{calls,tris}`. Verified via Playwright (`tooling/_qa3d.mjs`): 14 calls, full board on
+  all viewports, roll works, no errors.
 
 ---
 
@@ -171,6 +180,11 @@ the emulator, not a bug.
 7. **SQLite `ATTACH`** — avoid the word "attach" in agent SQL.
 8. Azure endpoint/resource/subscription IDs are **identifiers, not secrets** (they're already in
    this public repo); never commit tokens/keys.
+9. **3D perf (`play3d.js`)**: keep the board as **InstancedMesh** (tiles/markers) + **one baked
+   numbers atlas** (not 100 sprites); mobile uses `dpr ≤ 1.5`, no MSAA, 3 lights. Camera must
+   **`fitRadius`** to the viewport (fov is *vertical* — portrait crops without it). Target ~14 draw
+   calls; check with `window.__sl3d.rendererInfo()`. **Emulator AVD renders WebGL far too slowly
+   (software GPU) — a black 3D canvas there is NOT a bug**; QA 3D with Playwright (`tooling/_qa3d.mjs`).
 
 ---
 

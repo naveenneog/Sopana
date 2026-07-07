@@ -84,26 +84,25 @@ async function main() {
   let current = 0;
   const multi = players.length > 1;
 
-  const renderer = new THREE.WebGLRenderer({ antialias: true });
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+  const MOBILE = matchMedia('(pointer: coarse)').matches || Math.min(window.innerWidth, window.innerHeight) < 820;
+  const renderer = new THREE.WebGLRenderer({ antialias: !MOBILE, powerPreference: 'high-performance' });
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, MOBILE ? 1.5 : 2));
   renderer.setSize(window.innerWidth, window.innerHeight);
   $('#stage').appendChild(renderer.domElement);
+  renderer.domElement.style.touchAction = 'none';
 
   const scene = new THREE.Scene();
   const bgDark = clampDark(C.bg);
   scene.background = new THREE.Color(bgDark);
-  scene.fog = new THREE.Fog(bgDark, 20, 44);
+  scene.fog = new THREE.Fog(bgDark, 26, 90);
 
-  const camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 200);
+  const camera = new THREE.PerspectiveCamera(55, window.innerWidth / window.innerHeight, 0.1, 300);
 
-  scene.add(new THREE.HemisphereLight(C.accent, C.panel, 0.5));
-  const key = new THREE.DirectionalLight(0xfff2e0, 1.1);
+  scene.add(new THREE.HemisphereLight(C.accent, C.panel, 0.72));
+  const key = new THREE.DirectionalLight(0xfff2e0, 1.15);
   key.position.set(7, 13, 5);
   scene.add(key);
-  const fill = new THREE.PointLight(C.accent, 0.7, 40);
-  fill.position.set(-6, 5, -4);
-  scene.add(fill);
-  scene.add(new THREE.AmbientLight(C.panel, 0.55));
+  scene.add(new THREE.AmbientLight(C.panel, 0.6));
 
   const board = new THREE.Group();
   scene.add(board);
@@ -115,21 +114,48 @@ async function main() {
   base.position.y = -0.35;
   board.add(base);
 
-  // ---- tiles + numbers ----
+  // ---- tiles: one InstancedMesh (per-instance colour) = 1 draw call ----
+  const tileGeo = new THREE.BoxGeometry(0.94, 0.16, 0.94);
+  const tileMat = new THREE.MeshStandardMaterial({ roughness: 0.85 });
+  const tiles = new THREE.InstancedMesh(tileGeo, tileMat, 100);
+  const dummy = new THREE.Object3D();
+  const col3 = new THREE.Color();
+  const markerData = [];
   for (let n = 1; n <= 100; n++) {
     const p = tilePos(n);
     const isL = idx.ladders.has(n);
     const isS = idx.snakes.has(n);
     const light = (Math.floor((n - 1) / 10) + ((n - 1) % 10)) % 2 === 0;
     const color = n === 100 ? C.accent : isL ? C.ladder : isS ? C.snake : light ? C.tileA : C.tileB;
-    const tile = new THREE.Mesh(
-      new THREE.BoxGeometry(0.94, 0.16, 0.94),
-      new THREE.MeshStandardMaterial({ color, roughness: 0.85, emissive: n === 100 ? C.accent : 0x000000, emissiveIntensity: n === 100 ? 0.35 : 1 }),
+    dummy.position.copy(p); dummy.rotation.set(0, 0, 0); dummy.updateMatrix();
+    tiles.setMatrixAt(n - 1, dummy.matrix);
+    tiles.setColorAt(n - 1, col3.setHex(color));
+    if (isL || isS) markerData.push({ p, isL });
+  }
+  tiles.instanceMatrix.needsUpdate = true;
+  if (tiles.instanceColor) tiles.instanceColor.needsUpdate = true;
+  board.add(tiles);
+
+  // ---- numbers: one atlas texture on a single plane = 1 draw call ----
+  board.add(makeNumbersPlane(idx, C.accent));
+
+  // ---- snake/ladder markers: one InstancedMesh ----
+  if (markerData.length) {
+    const markers = new THREE.InstancedMesh(
+      new THREE.TorusGeometry(0.34, 0.045, 8, 24),
+      new THREE.MeshStandardMaterial({ roughness: 0.6, emissive: 0x1a1205, emissiveIntensity: 0.5 }),
+      markerData.length,
     );
-    tile.position.copy(p);
-    board.add(tile);
-    board.add(numberSprite(n, p, isL, isS));
-    if (isL || isS) board.add(makeMarker(p, isL));
+    markerData.forEach((m, i) => {
+      dummy.position.set(m.p.x, 0.13, m.p.z);
+      dummy.rotation.set(Math.PI / 2, 0, 0);
+      dummy.updateMatrix();
+      markers.setMatrixAt(i, dummy.matrix);
+      markers.setColorAt(i, col3.setHex(m.isL ? 0x3ddc84 : 0xff5c5c));
+    });
+    markers.instanceMatrix.needsUpdate = true;
+    if (markers.instanceColor) markers.instanceColor.needsUpdate = true;
+    board.add(markers);
   }
 
   // Snakes & ladders are NOT drawn upfront (declutter) — each appears on landing.
@@ -149,23 +175,39 @@ async function main() {
   die.position.set(6.2, 0.7, 6.2);
   scene.add(die);
 
-  // ---- camera controller (spherical) ----
-  const cam = { radius: 15, theta: Math.PI / 4, phi: 0.9, t: new THREE.Vector3(0, 0, 0) };
+  // ---- camera controller (spherical, fit to viewport) ----
+  const cam = { radius: 15, baseRadius: 15, theta: Math.PI / 4, phi: 0.9, t: new THREE.Vector3(0, 0, 0) };
   let camTween = null;
   let presetIdx = 0;
+
+  const BOARD_R = 7.7; // bounding radius of the 10.8 board footprint (+ small margin)
+  // smallest orbit distance at which the whole board fits the current viewport (portrait-safe)
+  function fitRadius(baseRadius) {
+    const vHalf = (camera.fov * Math.PI) / 360;
+    const hHalf = Math.atan(Math.tan(vHalf) * camera.aspect);
+    const needed = BOARD_R / Math.sin(Math.min(vHalf, hHalf));
+    return Math.max(baseRadius, needed);
+  }
+  // On tall/portrait phones a corner-on isometric leaves the square board a shallow band;
+  // a more top-down default turns it into a big diamond that fills the screen.
+  function presetPhi(p) {
+    if (camera.aspect < 0.85 && p.name === 'Isometric') return 0.55;
+    return p.phi;
+  }
   applyPresetInstant(PRESETS[0]);
 
   function applyPresetInstant(p) {
-    cam.radius = p.radius; cam.theta = p.theta; cam.phi = p.phi;
+    cam.baseRadius = p.radius; cam.radius = fitRadius(p.radius); cam.theta = p.theta; cam.phi = presetPhi(p);
     cam.t.set(p.t[0], p.t[1], p.t[2]);
   }
   function goPreset(i) {
     presetIdx = (i + PRESETS.length) % PRESETS.length;
     const p = PRESETS[presetIdx];
     $('#viewName').textContent = p.name;
+    cam.baseRadius = p.radius;
     camTween = {
       from: { radius: cam.radius, theta: cam.theta, phi: cam.phi, t: cam.t.clone() },
-      to: { radius: p.radius, theta: p.theta, phi: p.phi, t: new THREE.Vector3(p.t[0], p.t[1], p.t[2]) },
+      to: { radius: fitRadius(p.radius), theta: p.theta, phi: presetPhi(p), t: new THREE.Vector3(p.t[0], p.t[1], p.t[2]) },
       t0: performance.now(), dur: 1200,
     };
   }
@@ -191,27 +233,44 @@ async function main() {
     camera.lookAt(cam.t);
   }
 
-  // drag-orbit + wheel-zoom
-  let dragging = false, lx = 0, ly = 0;
+  // drag-orbit (1 finger) + pinch-zoom (2 fingers) + wheel-zoom
+  const MINR = 6, MAXR = 46;
+  let lx = 0, ly = 0, pinchD = 0;
   const el = renderer.domElement;
-  el.addEventListener('pointerdown', (e) => { dragging = true; lx = e.clientX; ly = e.clientY; });
-  window.addEventListener('pointerup', () => { dragging = false; });
+  const ptrs = new Map();
+  const pinchDist = () => { const a = [...ptrs.values()]; return Math.hypot(a[0].x - a[1].x, a[0].y - a[1].y); };
+  el.addEventListener('pointerdown', (e) => {
+    ptrs.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    lx = e.clientX; ly = e.clientY;
+    if (ptrs.size === 2) pinchD = pinchDist();
+  });
+  const dropPtr = (e) => { ptrs.delete(e.pointerId); if (ptrs.size < 2) pinchD = 0; };
+  window.addEventListener('pointerup', dropPtr);
+  window.addEventListener('pointercancel', dropPtr);
   window.addEventListener('pointermove', (e) => {
-    if (!dragging) return;
+    if (!ptrs.has(e.pointerId)) return;
+    ptrs.set(e.pointerId, { x: e.clientX, y: e.clientY });
     camTween = null;
+    if (ptrs.size >= 2) {
+      const d = pinchDist();
+      if (pinchD > 0 && d > 0) cam.radius = Math.max(MINR, Math.min(MAXR, cam.radius * (pinchD / d)));
+      pinchD = d;
+      return;
+    }
     cam.theta -= (e.clientX - lx) * 0.006;
     cam.phi = Math.max(0.06, Math.min(1.5, cam.phi - (e.clientY - ly) * 0.006));
     lx = e.clientX; ly = e.clientY;
   });
   el.addEventListener('wheel', (e) => {
     e.preventDefault();
-    cam.radius = Math.max(7, Math.min(28, cam.radius + Math.sign(e.deltaY) * 1.2));
+    cam.radius = Math.max(MINR, Math.min(MAXR, cam.radius + Math.sign(e.deltaY) * 1.2));
   }, { passive: false });
 
   window.addEventListener('resize', () => {
     renderer.setSize(window.innerWidth, window.innerHeight);
     camera.aspect = window.innerWidth / window.innerHeight;
     camera.updateProjectionMatrix();
+    if (!camTween) cam.radius = fitRadius(cam.baseRadius); // re-fit the board on rotate/resize
   });
 
   // ---- render loop ----
@@ -413,26 +472,40 @@ async function main() {
     getPos: () => pos,
     setView: (i) => goPreset(i),
     presetName: () => PRESETS[presetIdx].name,
-    rendererInfo: () => renderer.info.render.triangles,
+    rendererInfo: () => ({ calls: renderer.info.render.calls, tris: renderer.info.render.triangles }),
+    fitInfo: () => ({ radius: +cam.radius.toFixed(1), aspect: +camera.aspect.toFixed(2) }),
   };
 }
 
 // ---------- factory helpers ----------
-function numberSprite(n, p, isL, isS) {
+// All 100 board numbers baked into ONE atlas texture on ONE plane (1 draw call).
+function makeNumbersPlane(idx, accentHex) {
+  const CELL = 104, SZ = CELL * 10;
   const c = document.createElement('canvas');
-  c.width = c.height = 72;
+  c.width = c.height = SZ;
   const x = c.getContext('2d');
-  x.clearRect(0, 0, 72, 72);
-  x.fillStyle = isL ? '#bfe08a' : isS ? '#ffb3a0' : '#e6d3ab';
-  x.font = 'bold 34px Georgia';
+  x.clearRect(0, 0, SZ, SZ);
+  x.font = 'bold 46px Georgia';
   x.textAlign = 'center';
   x.textBaseline = 'middle';
-  x.fillText(String(n), 36, 38);
+  const accent = '#' + ('000000' + (accentHex >>> 0).toString(16)).slice(-6);
+  for (let n = 1; n <= 100; n++) {
+    const { row, col } = squareToCell(n, 100, 10);
+    // align atlas cell with tilePos: col 0 -> left, row 0 -> near(+z); plane is rotated -90deg about X
+    const cx = col * CELL + CELL / 2;
+    const cy = (9 - row) * CELL + CELL / 2;
+    x.fillStyle = n === 100 ? accent : idx.ladders.has(n) ? '#bfe08a' : idx.snakes.has(n) ? '#ffb3a0' : '#e6d3ab';
+    x.fillText(String(n), cx, cy);
+  }
   const tex = new THREE.CanvasTexture(c);
-  const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, transparent: true, depthWrite: false }));
-  s.position.set(p.x, 0.14, p.z);
-  s.scale.set(0.62, 0.62, 0.62);
-  return s;
+  tex.anisotropy = 4;
+  const plane = new THREE.Mesh(
+    new THREE.PlaneGeometry(10, 10),
+    new THREE.MeshBasicMaterial({ map: tex, transparent: true, depthWrite: false }),
+  );
+  plane.rotation.x = -Math.PI / 2;
+  plane.position.y = 0.11;
+  return plane;
 }
 
 function makeMarker(p, isLadder) {
