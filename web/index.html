@@ -136,7 +136,7 @@
       @media (max-width: 820px) { .cards { grid-template-columns: 1fr; max-width: 460px; margin: 0 auto; } }
       .card { border: 1px solid var(--line); border-radius: 16px; overflow: hidden; background: var(--panel); transition: transform 0.18s, border-color 0.18s; }
       .card:hover { transform: translateY(-4px); border-color: rgba(232, 163, 61, 0.5); }
-      .card img { width: 100%; aspect-ratio: 16 / 10; object-fit: cover; border-bottom: 1px solid rgba(232, 163, 61, 0.14); }
+      .card img, .card video { width: 100%; aspect-ratio: 16 / 10; object-fit: cover; border-bottom: 1px solid rgba(232, 163, 61, 0.14); background: #000; display: block; }
       .card .body { padding: 1rem 1.1rem 1.2rem; }
       .card h3 { margin: 0 0 0.3rem; color: var(--gold-bright); font-size: 1.2rem; }
       .card p { margin: 0; color: var(--muted); font-size: 0.94rem; }
@@ -273,7 +273,18 @@
               </div>
             </article>
             <article class="card">
-              <img src="assets/media/mode-cinematic.jpg" alt="Cinematic mode — a backlit golden lion sprite walks a shadow-theatre path in the Panchatantra world" loading="lazy" />
+              <video
+                class="card-vid"
+                autoplay
+                muted
+                loop
+                playsinline
+                preload="metadata"
+                poster="assets/media/mode-cinematic.jpg"
+                aria-label="Cinematic mode gameplay — a backlit golden lion walks the Panchatantra shadow-theatre path, then the illustrated ‘Wit of the Hare’ set-piece unfolds."
+              >
+                <source src="assets/media/mode-cinematic.mp4" type="video/mp4" />
+              </video>
               <div class="body">
                 <div class="k">✨</div>
                 <h3>Cinematic</h3>
@@ -281,7 +292,18 @@
               </div>
             </article>
             <article class="card">
-              <img src="assets/media/mode-3d.jpg" alt="3D mode — a real three-dimensional Habit Heroes board with coloured tiles and a standing player token" loading="lazy" />
+              <video
+                class="card-vid"
+                autoplay
+                muted
+                loop
+                playsinline
+                preload="metadata"
+                poster="assets/media/mode-3d.jpg"
+                aria-label="3D mode gameplay — two player tokens move across a real three-dimensional Habit Heroes board with coloured tiles and an orbiting camera."
+              >
+                <source src="assets/media/mode-3d.mp4" type="video/mp4" />
+              </video>
               <div class="body">
                 <div class="k">🎲</div>
                 <h3>3D</h3>
@@ -416,6 +438,20 @@
           var base = a.getAttribute('href').split('?')[0];
           a.setAttribute('href', base + qs);
         });
+      })();
+
+      // Play the mode-card clips only while they're on screen (kind to low-end devices).
+      (function () {
+        var vids = document.querySelectorAll('video.card-vid');
+        if (!vids.length) return;
+        if (!('IntersectionObserver' in window)) { vids.forEach(function (v) { v.play().catch(function () {}); }); return; }
+        var io = new IntersectionObserver(function (entries) {
+          entries.forEach(function (en) {
+            if (en.isIntersecting) { en.target.play().catch(function () {}); }
+            else { en.target.pause(); }
+          });
+        }, { threshold: 0.25 });
+        vids.forEach(function (v) { io.observe(v); });
       })();
 
       // Point the Android buttons at the actual latest APK asset (auto-updates per release).

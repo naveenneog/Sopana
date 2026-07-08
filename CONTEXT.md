@@ -134,11 +134,13 @@ the emulator, not a bug.
 
 ## Version history
 - **Landing page (Pages, no release/APK change)** — `web/index.html` became a full launch/landing page:
-  hero **gameplay recording** (`tooling/record_gameplay.mjs` drives a 2-player moksha board through a
-  virtue-ladder + vice-serpent Meaning Reveal, Playwright records WebM → ffmpeg MP4 + poster), the three
-  modes, the four worlds, a feature grid, and **Play + direct-latest-APK** buttons (APK href resolved to
-  the real asset via the GitHub API). Media in `web/assets/media/`. `apk.yml` now also ships a stable
-  `Sopana.apk`. The installed app / PWA still open the game (Capacitor-native guard + manifest `start_url`).
+  a hero **gameplay recording** plus **per-mode video clips** — `tooling/record_gameplay.mjs` drives Board
+  (moksha), Cinematic (panchatantra) and 3D (habits) through a virtue-ladder + vice-serpent Meaning Reveal
+  (Playwright records WebM → ffmpeg MP4 + poster; a one-shot `Math.random` override controls only the die).
+  The "three ways to play" Cinematic & 3D cards **autoplay their clips** (IntersectionObserver plays only
+  when on-screen). Also: the four worlds, a feature grid, and **Play + direct-latest-APK** buttons (APK href
+  resolved to the real asset via the GitHub API). Media in `web/assets/media/`. `apk.yml` now also ships a
+  stable `Sopana.apk`. The installed app / PWA still open the game (Capacitor-native guard + manifest `start_url`).
 - **v1.0/1.1** — M0 board + real art/voice (gpt-image-2 + Azure TTS); Cinematic (5 phases:
   walk/dice/camera, set-pieces, realms/curtains, Sora intro + title, procedural Web Audio);
   UX/QA fixes (mute, pacing). Founders + Panchatantra themes added.
