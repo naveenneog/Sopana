@@ -125,6 +125,7 @@ async function main() {
   renderCounts();
   renderPlayers();
   $('#begin').addEventListener('click', begin);
+  document.dispatchEvent(new CustomEvent('sopana:lobby-ready'));
 }
 
 main();

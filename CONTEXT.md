@@ -79,6 +79,9 @@ its procedural temple drone (no music.mp3) by design.
   3D bg/fog/lights/tiles from `theme`; light themes dark-clamped for the backlit modes).
 - **In-game theme switcher** + a Cinematic|Board|3D|Lobby nav that carries `?world=`.
 - **Lobby a11y** — aria-pressed + `:focus-visible` rings; distinct default characters.
+- **First-run lobby tour** — a coach-mark overlay (`web/js/onboarding.js`) that spotlights each lobby
+  step (theme → mode → players → **name field** → Begin) for new players; auto-runs once (localStorage
+  `sopana.tour.v1`), keyboard + click friendly, and replayable via a floating "❔" button.
 - **Landing / launch page** — `web/index.html` is a marketing launch page (hero gameplay recording,
   three modes, four worlds, feature grid, Play + direct-latest-APK CTAs, OG/Twitter cards). A
   Capacitor-native guard + the manifest `start_url` keep the installed app / PWA opening straight into
@@ -133,6 +136,11 @@ the emulator, not a bug.
 ---
 
 ## Version history
+- **First-run lobby onboarding** — `web/js/onboarding.js` adds a spotlight coach-mark tour over the
+  lobby (`setup.html`): a centered welcome, then steps that highlight the theme grid, mode pills, player
+  count, the **name input** and the Begin button (dark scrim + gold-ring hole + tooltip with Back/Next/Skip,
+  progress dots, keyboard + click-to-advance). Auto-runs once (`localStorage sopana.tour.v1`), replayable via
+  a floating "❔" button. `setup.js` fires a `sopana:lobby-ready` event once its controls render.
 - **Landing page (Pages, no release/APK change)** — `web/index.html` became a full launch/landing page:
   a hero **gameplay recording** plus **per-mode video clips** — `tooling/record_gameplay.mjs` drives Board
   (moksha), Cinematic (panchatantra) and 3D (habits) through a virtue-ladder + vice-serpent Meaning Reveal
