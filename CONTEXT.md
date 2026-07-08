@@ -8,6 +8,9 @@
 - **Live:** https://naveenneog.github.io/Sopana/
 - **Repo:** https://github.com/naveenneog/Sopana (public, PolyForm Noncommercial 1.0.0)
 - **Latest release:** **v1.8.0** (releases v1.0.0 → v1.8.0; a GitHub Release rebuilds the APK)
+- **Live site now (post-v1.8.0, Pages-only):** the root is a **launch/landing page** (`index.html`)
+  and the lobby has a **first-run coach-mark tour**; the game itself is unchanged behind them. Pages
+  redeploys `web/` on every push to `main`; the APK is still v1.8.0 (cut a Release to rebuild it).
 - **Owner:** @naveenneog (Naveen Gopalakrishna)
 
 ---
@@ -28,6 +31,7 @@ Served from `web/`:
 ```
 index.html            → LAUNCH / landing page (Play → setup.html; installed app + PWA skip straight to the game)
 setup.html + js/setup.js     LOBBY: pick theme, mode, 1-4 players, a character each → sessionStorage
+js/onboarding.js      first-run coach-mark tour over the lobby (spotlight + tooltips; localStorage `sopana.tour.v1`; replay via ❔)
 board.html + js/game.js      Renderer A — 2D DOM board + live roster + Meaning Reveal
 cinematic.html + js/cinematic.js  Renderer B — PixiJS 2.5D backlit shadow-theatre
 play3d.html + js/play3d.js        Renderer C — Three.js real 3D board, 5 camera presets + orbit/zoom
@@ -38,6 +42,9 @@ js/snakes.js          themed animated SVG snake renderer (board) + style map (3D
 worlds/<id>.json      the game data (theme, characters, ladders[], snakes[])
 vendor/               pixi.min.js, three.module.js + three.core.js (BOTH required)
 assets/<id>/          per-theme media (see inventory below)
+assets/media/         landing-page clips (gameplay/mode-cinematic/mode-3d .mp4 + posters) from tooling/record_gameplay.mjs
+assets/brand/         logo.png + logo-mark.png + PWA icons (from tooling/make_brand_assets.py)
+manifest.webmanifest  PWA — start_url = setup.html (so the installed app/PWA opens the GAME, not the landing page)
 ```
 Data flow: `worlds/<id>.json → logic.js (validate+index+rules)`; `config.js` supplies players;
 each renderer draws the same data. `resolveMove(pos, roll, world) → {landed, to, hit, won, bounced}`
@@ -107,12 +114,33 @@ intro prompts) — **add a theme = add its entries there**.
 
 ---
 
+## Model context (AI models + endpoints)
+All generation runs on **Azure AI Foundry** (resource `ai-contosohub530569751908`, an **AIServices S0**
+in `rg-contosohub`), authenticated with **AAD** (`az login`; keys disabled — bearer from
+`az account get-access-token --resource https://cognitiveservices.azure.com`). The endpoint/resource IDs
+are **identifiers, not secrets**; never commit tokens/keys.
+
+| Model | Where / how | Produces |
+|---|---|---|
+| **gpt-image-2** | `…/openai/deployments/gpt-image-2/images/generations?api-version=2025-04-01-preview` (the v1 route → `unknown_model`; rate-limits ~3 parallel, 429 → retry) | `board.png`, `token.png`, motif `<type>-<from>.png`, cinematic `char-*.png`, brand logo |
+| **Sora-2** | `…/openai/v1/videos?api-version=preview` (long-running — run detached) | per-theme `intro.mp4` opening films |
+| **Azure neural TTS** | Speech `…/cognitiveservices/v1`; **DragonHD** multilingual voices via each world's `voice.azure` (e.g. `en-IN-Arjun`/`en-IN-Neerja:DragonHDLatestNeural`); Web-Speech fallback in-app | narrated meanings `audio/<type>-<from>.mp3` |
+
+**Runtime makes no model calls** — narration is the prerecorded mp3 (→ Web-Speech fallback) and music is a
+composed loop (`gen_theme_music.py`, numpy+ffmpeg) or procedural Web Audio (moksha drone). The landing-page
+gameplay clips are **recorded, not generated**: `tooling/record_gameplay.mjs` (Playwright → ffmpeg).
+Art-direction for the image/video/voice prompts lives in dicts inside each `tooling/gen_*.py`
+(`STYLE/TOKEN/BOARD/MOTIF`, `CHARS`, music composers, intro prompts) — **add a theme = add its entries there**.
+
+---
+
 ## Build / run / test / QA
 ```bash
 npm run serve        # dev server → http://localhost:5173 (scripts/serve.mjs)
 npm test             # node:test: logic + dom.smoke (jsdom loads board.html) + assets-sync (19 tests)
 node tooling/qa_full.mjs   # Playwright: console/page errors, responsive overflow (mobile/tablet/desktop/TV),
                            # lobby a11y, per-theme screenshots. Launch WebGL with --use-gl=swiftshader.
+node tooling/record_gameplay.mjs   # re-record the landing-page Board/Cinematic/3D clips (needs `npm run serve`)
 ```
 Android emulator QA: SDK at `%LOCALAPPDATA%\Android\Sdk`, AVD `actioncut_test` (android-34).
 `adb reverse tcp:5173 tcp:5173` + device Chrome tests the dev build on-device. **Emulator GPU is
