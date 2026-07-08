@@ -55,16 +55,21 @@ jobs:
         run: |
           VER="${{ github.event.release.tag_name || github.event.inputs.version || 'dev' }}"
           cp android/app/build/outputs/apk/debug/app-debug.apk "Sopana-${VER}.apk"
+          # Stable-named copy so the landing page can link to a permanent "latest" URL:
+          # https://github.com/naveenneog/Sopana/releases/latest/download/Sopana.apk
+          cp android/app/build/outputs/apk/debug/app-debug.apk "Sopana.apk"
           echo "apk=Sopana-${VER}.apk" >> "$GITHUB_OUTPUT"
 
       - name: Upload APK as workflow artifact
         uses: actions/upload-artifact@v4
         with:
           name: sopana-apk
-          path: Sopana-*.apk
+          path: Sopana*.apk
 
       - name: Attach APK to the release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ github.event.release.tag_name || github.event.inputs.version }}
-          files: Sopana-*.apk
+          files: |
+            Sopana-*.apk
+            Sopana.apk

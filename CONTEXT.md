@@ -26,7 +26,7 @@ multiplayer** and **per-theme AI-generated art / narration / music / intro film*
 Served from `web/`:
 
 ```
-index.html            → redirects to setup.html (the lobby IS the landing)
+index.html            → LAUNCH / landing page (Play → setup.html; installed app + PWA skip straight to the game)
 setup.html + js/setup.js     LOBBY: pick theme, mode, 1-4 players, a character each → sessionStorage
 board.html + js/game.js      Renderer A — 2D DOM board + live roster + Meaning Reveal
 cinematic.html + js/cinematic.js  Renderer B — PixiJS 2.5D backlit shadow-theatre
@@ -79,6 +79,10 @@ its procedural temple drone (no music.mp3) by design.
   3D bg/fog/lights/tiles from `theme`; light themes dark-clamped for the backlit modes).
 - **In-game theme switcher** + a Cinematic|Board|3D|Lobby nav that carries `?world=`.
 - **Lobby a11y** — aria-pressed + `:focus-visible` rings; distinct default characters.
+- **Landing / launch page** — `web/index.html` is a marketing launch page (hero gameplay recording,
+  three modes, four worlds, feature grid, Play + direct-latest-APK CTAs, OG/Twitter cards). A
+  Capacitor-native guard + the manifest `start_url` keep the installed app / PWA opening straight into
+  the game, so no game endpoint is lost.
 - **Published** — GitHub Pages + Android APK (debug-signed) via CI.
 
 ---
@@ -116,15 +120,25 @@ the emulator, not a bug.
 
 ## Publishing
 - **Web:** `.github/workflows/pages.yml` deploys `web/` to Pages. Enabled once via
-  `gh api --method POST repos/naveenneog/Sopana/pages -f build_type=workflow`.
+  `gh api --method POST repos/naveenneog/Sopana/pages -f build_type=workflow`. `web/index.html` is the
+  **launch/landing page**; the game itself stays at `setup.html`/`board.html`/`cinematic.html`/`play3d.html`.
 - **APK:** `.github/workflows/apk.yml` wraps `web/` with **Capacitor 7** → `gradlew assembleDebug`.
   **CRITICAL: CI must use JDK 21** (`actions/setup-java@v4`, `java-version:"21"`); JDK 17 fails
-  `invalid source release: 21`. `capacitor.config.json` appId = `com.naveenneog.sopana`.
+  `invalid source release: 21`. `capacitor.config.json` appId = `com.naveenneog.sopana`. The workflow
+  publishes both `Sopana-vX.Y.Z.apk` **and** a stable `Sopana.apk` (permalink
+  `releases/latest/download/Sopana.apk`); the landing page's Android button resolves the **actual latest
+  APK asset** via the GitHub API (`/releases/latest`), falling back to the versioned direct URL.
 - **Release:** `gh release create vX.Y.Z ...` triggers the APK build; asset `Sopana-vX.Y.Z.apk`.
 
 ---
 
 ## Version history
+- **Landing page (Pages, no release/APK change)** — `web/index.html` became a full launch/landing page:
+  hero **gameplay recording** (`tooling/record_gameplay.mjs` drives a 2-player moksha board through a
+  virtue-ladder + vice-serpent Meaning Reveal, Playwright records WebM → ffmpeg MP4 + poster), the three
+  modes, the four worlds, a feature grid, and **Play + direct-latest-APK** buttons (APK href resolved to
+  the real asset via the GitHub API). Media in `web/assets/media/`. `apk.yml` now also ships a stable
+  `Sopana.apk`. The installed app / PWA still open the game (Capacitor-native guard + manifest `start_url`).
 - **v1.0/1.1** — M0 board + real art/voice (gpt-image-2 + Azure TTS); Cinematic (5 phases:
   walk/dice/camera, set-pieces, realms/curtains, Sora intro + title, procedural Web Audio);
   UX/QA fixes (mute, pacing). Founders + Panchatantra themes added.
